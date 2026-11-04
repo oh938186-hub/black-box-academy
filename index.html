@@ -391,6 +391,7 @@ body[data-theme="night"] {
       <button class="navbtn" data-view="cases"><span class="navicon">🔍</span>Arquivos de caso</button>
       <button class="navbtn" data-view="cast"><span class="navicon">👥</span>Elenco</button>
       <button class="navbtn" data-view="progress"><span class="navicon">📊</span>Meu progresso</button>
+      <button class="navbtn" data-view="multiplayer" style="color:var(--red)"><span class="navicon">🌐</span>Multiplayer</button>
     </nav>
     <div class="rail-bottom">
       <div class="progress-mini">
@@ -410,6 +411,55 @@ body[data-theme="night"] {
         <button class="iconbtn" id="settings-open" aria-label="Configurações" title="Configurações">⚙️</button>
       </div>
     </div>
+
+    <!-- SEÇÃO MULTIPLAYER -->
+    <section class="view" id="view-multiplayer">
+      <div class="page-title">
+        <div><div class="eyebrow">Seção 04 / Investigação Coletiva</div><h1>Investigação em Grupo.</h1></div>
+        <p>Conecte-se em tempo real com outros detetives da Hope's Peak. Compartilhe o caso, analisem pistas e apresentem acusações em conjunto.</p>
+      </div>
+      <div class="progress-layout">
+        <div class="progress-card">
+          <div class="eyebrow">Criar ou Entrar em Sala</div>
+          <h3>Central de Conexão.</h3>
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:15px">
+            <div>
+              <label style="font-size:10px; font-weight:800; color:var(--muted); text-transform:uppercase">Seu Nome de Detetive:</label>
+              <input id="player-name-input" type="text" placeholder="Ex: Naegi" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--paper2); color:var(--ink); margin-top:4px">
+            </div>
+            <div style="display:flex; gap:8px">
+              <button class="btn primary" id="btn-create-room" style="flex:1">CRIAR SALA ↗</button>
+            </div>
+            <hr style="border:0; border-top:1px solid var(--line); margin:10px 0">
+            <div>
+              <label style="font-size:10px; font-weight:800; color:var(--muted); text-transform:uppercase">Código da Sala:</label>
+              <div style="display:flex; gap:8px; margin-top:4px">
+                <input id="room-code-input" type="text" placeholder="Ex: HPA-8921" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--paper2); color:var(--ink); text-transform:uppercase">
+                <button class="btn ink" id="btn-join-room">ENTRAR</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="progress-card">
+          <div class="eyebrow">Status da Conexão</div>
+          <h3 id="room-status-title">Fora de Sala</h3>
+          <div id="room-info-box" style="display:none; margin-top:15px">
+            <div style="background:var(--dark); color:white; padding:14px; border-radius:10px; margin-bottom:12px">
+              <span style="font-size:10px; letter-spacing:.15em; color:var(--acid); text-transform:uppercase">CÓDIGO DA SALA DE INVESTIGAÇÃO:</span>
+              <h2 id="current-room-code" style="margin:4px 0 0; font-family:var(--serif); font-size:32px; color:var(--acid); letter-spacing:2px">-------</h2>
+              <small style="font-size:10px; color:#aaa">Compartilhe este código com o seu parceiro detetive.</small>
+            </div>
+            <div class="subhead"><h3 style="font-size:10px">Detetives na Sala</h3></div>
+            <div id="room-players-list" style="display:grid; gap:6px"></div>
+            <button class="btn soft" id="btn-leave-room" style="width:100%; margin-top:15px">SAIR DA SALA</button>
+          </div>
+          <div id="room-idle-box" class="empty-state">
+            Você não está em nenhuma sala no momento. Crie uma nova sala ou digite o código de um parceiro para investigar juntos.
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="view active" id="view-home">
       <div class="hero">
@@ -584,58 +634,211 @@ body[data-theme="night"] {
   <button class="active" data-view="home"><span>📁</span>INÍCIO</button>
   <button data-view="cases"><span>🔍</span>CASOS</button>
   <button data-view="cast"><span>👥</span>ELENCO</button>
-  <button data-view="progress"><span>📊</span>PROGRESSO</button>
+  <button data-view="multiplayer" style="color:var(--red)"><span>🌐</span>MULTI</button>
 </nav>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-<div class="modal-wrap" id="settings-modal" role="dialog" aria-modal="true">
-  <div class="modal">
-    <div class="modal-top">
-      <div class="eyebrow">Preferências do arquivo</div>
-      <button class="modal-x" data-close="settings-modal">✕</button>
-    </div>
-    <h2>Control room.</h2>
-    <p>Personalize a interface. Suas escolhas ficam salvas neste dispositivo.</p>
-    <div class="setting-row">
-      <div><strong>Paleta visual</strong><small>Escolha a atmosfera do arquivo.</small></div>
-      <div class="theme-options">
-        <button class="theme-dot" data-theme-set="paper" style="background:#e9e5dc" aria-pressed="true"></button>
-        <button class="theme-dot" data-theme-set="red" style="background:#9d2028" aria-pressed="false"></button>
-        <button class="theme-dot" data-theme-set="night" style="background:#171a20" aria-pressed="false"></button>
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'blackbox-hpa-app';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+let db = null;
+let auth = null;
+let currentUser = null;
+let roomUnsubscribe = null;
+let currentRoomId = null;
+
+if (firebaseConfig) {
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+
+  const initAuth = async () => {
+    try {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        const cred = await signInWithCustomToken(auth, __initial_auth_token);
+        currentUser = cred.user;
+      } else {
+        const cred = await signInAnonymously(auth);
+        currentUser = cred.user;
+      }
+    } catch (e) {
+      console.error("Auth error:", e);
+    }
+  };
+  initAuth();
+}
+
+window.mpState = {
+  roomId: null,
+  playerName: 'Detetive',
+  isHost: false
+};
+
+// Funções do Firebase Multiplayer
+window.createRoom = async () => {
+  if (!db || !auth.currentUser) {
+    window.toast('Conexão Firebase não pronta.');
+    return;
+  }
+  const nameInput = document.getElementById('player-name-input').value.trim() || 'Detetive';
+  const code = 'HPA-' + Math.floor(1000 + Math.random() * 9000);
+  const roomId = code.toLowerCase();
+  
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+  const playerInfo = { uid: auth.currentUser.uid, name: nameInput };
+
+  const initialData = {
+    code: code,
+    activeCase: 1,
+    selectedProof: null,
+    selectedSuspect: null,
+    players: [playerInfo],
+    doneCases: window.state.done || [],
+    lastAccuse: null,
+    updatedAt: Date.now()
+  };
+
+  try {
+    await setDoc(roomDocRef, initialData);
+    window.mpState.playerName = nameInput;
+    window.mpState.isHost = true;
+    listenToRoom(roomId);
+    window.toast('Sala criada com sucesso!');
+  } catch (err) {
+    console.error(err);
+    window.toast('Erro ao criar sala.');
+  }
+};
+
+window.joinRoom = async () => {
+  if (!db || !auth.currentUser) {
+    window.toast('Conexão Firebase não pronta.');
+    return;
+  }
+  const codeInput = document.getElementById('room-code-input').value.trim().toUpperCase();
+  if (!codeInput) {
+    window.toast('Digite o código da sala.');
+    return;
+  }
+  const roomId = codeInput.toLowerCase();
+  const nameInput = document.getElementById('player-name-input').value.trim() || 'Detetive';
+
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+  
+  window.mpState.playerName = nameInput;
+  listenToRoom(roomId, nameInput);
+};
+
+function listenToRoom(roomId, newPlayerName = null) {
+  if (roomUnsubscribe) roomUnsubscribe();
+  currentRoomId = roomId;
+
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+
+  roomUnsubscribe = onSnapshot(roomDocRef, async (snapshot) => {
+    if (!snapshot.exists()) {
+      window.toast('Sala não encontrada.');
+      leaveRoomUI();
+      return;
+    }
+    const data = snapshot.data();
+    window.mpState.roomId = roomId;
+
+    // Adiciona o jogador atual à lista de players se ainda não estiver
+    if (newPlayerName && !data.players.some(p => p.uid === auth.currentUser.uid)) {
+      const updatedPlayers = [...data.players, { uid: auth.currentUser.uid, name: newPlayerName }];
+      await updateDoc(roomDocRef, { players: updatedPlayers });
+      return;
+    }
+
+    // Atualiza a Interface do Multiplayer
+    document.getElementById('room-info-box').style.display = 'block';
+    document.getElementById('room-idle-box').style.display = 'none';
+    document.getElementById('current-room-code').textContent = data.code;
+    document.getElementById('room-status-title').textContent = 'Conectado em Tempo Real';
+
+    document.getElementById('room-players-list').innerHTML = data.players.map(p => `
+      <div style="background:var(--paper2); border:1px solid var(--line); padding:8px 12px; border-radius:6px; font-size:11px; display:flex; justify-content:space-between; align-items:center">
+        <span>🕵️ <b>${p.name}</b> ${p.uid === auth.currentUser.uid ? '(Você)' : ''}</span>
+        <span style="font-size:9px; color:#6b9a47; font-weight:900">ONLINE</span>
       </div>
-    </div>
-    <div class="setting-row">
-      <div><strong>Efeitos sonoros</strong><small>Pequenos sons de interface gerados no navegador.</small></div>
-      <button class="switch" id="sound-setting">DESLIGADO</button>
-    </div>
-    <div class="setting-row">
-      <div><strong>Movimento reduzido</strong><small>Desativa animações decorativas.</small></div>
-      <button class="switch" id="motion-setting">DESLIGADO</button>
-    </div>
-    <div class="setting-row">
-      <div><strong>Dados locais</strong><small>O progresso fica neste navegador.</small></div>
-      <span style="font-size:10px; color:var(--muted)">LOCAL ONLY</span>
-    </div>
-    <button class="btn red" style="width:100%; margin-top:17px" data-close="settings-modal">CONCLUÍDO</button>
-  </div>
-</div>
+    `).join('');
 
-<div class="modal-wrap" id="confirm-modal" role="dialog" aria-modal="true">
-  <div class="modal">
-    <div class="modal-top">
-      <div class="eyebrow">Ação irreversível</div>
-      <button class="modal-x" data-close="confirm-modal">✕</button>
-    </div>
-    <h2>Apagar o arquivo?</h2>
-    <p>Isso remove os seis estados de conclusão, tentativas e preferências salvas neste navegador.</p>
-    <div style="display:flex; gap:8px; margin-top:20px">
-      <button class="btn soft" style="flex:1" data-close="confirm-modal">CANCELAR</button>
-      <button class="btn red" style="flex:1" id="confirm-reset">APAGAR TUDO</button>
-    </div>
-  </div>
-</div>
+    // Sincroniza estado de Investigação
+    if (data.doneCases && Array.isArray(data.doneCases)) {
+      const newDone = [...new Set([...window.state.done, ...data.doneCases])];
+      if (newDone.length !== window.state.done.length) {
+        window.state.done = newDone;
+        window.save();
+        window.renderCaseTiles();
+        window.updateProgress();
+      }
+    }
 
-<div class="toast" id="toast"></div>
-<div class="confetti" id="confetti"></div>
+    // Sincronizar escolha de provas e suspeito no caso ativo se o usuário estiver visualizando
+    if (data.activeCase === window.activeCase) {
+      if (data.selectedProof !== null && data.selectedProof !== window.state.selectedProof) {
+        window.state.selectedProof = data.selectedProof;
+        document.querySelectorAll('[data-proof]').forEach(b => b.classList.toggle('selected', Number(b.dataset.proof) === data.selectedProof));
+      }
+      if (data.selectedSuspect !== null && data.selectedSuspect !== window.state.selectedSuspect) {
+        window.state.selectedSuspect = data.selectedSuspect;
+        document.querySelectorAll('[data-suspect]').forEach(b => b.classList.toggle('selected', Number(b.dataset.suspect) === data.selectedSuspect));
+      }
+    }
+
+  }, (err) => {
+    console.error("Room sync error:", err);
+  });
+}
+
+window.leaveRoom = () => {
+  if (roomUnsubscribe) roomUnsubscribe();
+  currentRoomId = null;
+  window.mpState.roomId = null;
+  leaveRoomUI();
+  window.toast('Você saiu da sala.');
+};
+
+function leaveRoomUI() {
+  document.getElementById('room-info-box').style.display = 'none';
+  document.getElementById('room-idle-box').style.display = 'block';
+  document.getElementById('room-status-title').textContent = 'Fora de Sala';
+}
+
+// Sincronizar ações para o Firestore quando em sala
+window.syncProofToRoom = async (proofIndex) => {
+  if (!currentRoomId || !db) return;
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
+  try {
+    await updateDoc(roomDocRef, { selectedProof: proofIndex, activeCase: window.activeCase });
+  } catch (e) {}
+};
+
+window.syncSuspectToRoom = async (suspectIndex) => {
+  if (!currentRoomId || !db) return;
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
+  try {
+    await updateDoc(roomDocRef, { selectedSuspect: suspectIndex, activeCase: window.activeCase });
+  } catch (e) {}
+};
+
+window.syncDoneCaseToRoom = async (caseId) => {
+  if (!currentRoomId || !db) return;
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
+  try {
+    const updatedDone = [...new Set([...window.state.done, caseId])];
+    await updateDoc(roomDocRef, { doneCases: updatedDone });
+  } catch (e) {}
+};
+
+document.getElementById('btn-create-room').onclick = window.createRoom;
+document.getElementById('btn-join-room').onclick = window.joinRoom;
+document.getElementById('btn-leave-room').onclick = window.leaveRoom;
+</script>
 
 <script>
 const CASES = [
@@ -944,6 +1147,7 @@ function chooseProof(i) {
   state.selectedProof = i;
   document.querySelectorAll('[data-proof]').forEach(b => b.classList.toggle('selected', Number(b.dataset.proof) === i));
   ping(650);
+  if (window.syncProofToRoom) window.syncProofToRoom(i);
 }
 
 function chooseSuspect(i) {
@@ -951,6 +1155,7 @@ function chooseSuspect(i) {
   state.selectedSuspect = i;
   document.querySelectorAll('[data-suspect]').forEach(b => b.classList.toggle('selected', Number(b.dataset.suspect) === i));
   ping(480);
+  if (window.syncSuspectToRoom) window.syncSuspectToRoom(i);
 }
 
 function accuse() {
@@ -970,6 +1175,7 @@ function accuse() {
     state.correct++;
     state.done = [...new Set([...state.done, activeCase])];
     save();
+    if (window.syncDoneCaseToRoom) window.syncDoneCaseToRoom(activeCase);
     document.getElementById('case-content').style.display = 'none';
     document.getElementById('result-text').textContent = c.solution;
     document.getElementById('result-banner').classList.add('show');
@@ -1076,9 +1282,15 @@ function setTheme(t) {
 }
 
 function settingsSync() {
-  document.getElementById('sound-setting').textContent = state.sound ? 'LIGADO' : 'DESLIGADO';
-  document.getElementById('motion-setting').textContent = state.motion ? 'LIGADO' : 'DESLIGADO';
-  document.getElementById('sound-toggle').style.color = state.sound ? 'var(--red)' : 'var(--ink)';
+  const soundBtn = document.getElementById('sound-setting');
+  if (soundBtn) soundBtn.textContent = state.sound ? 'LIGADO' : 'DESLIGADO';
+
+  const motionBtn = document.getElementById('motion-setting');
+  if (motionBtn) motionBtn.textContent = state.motion ? 'LIGADO' : 'DESLIGADO';
+
+  const soundToggle = document.getElementById('sound-toggle');
+  if (soundToggle) soundToggle.style.color = state.sound ? 'var(--red)' : 'var(--ink)';
+
   document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeSet === state.theme)));
   document.body.classList.toggle('reduce-motion', !!state.motion);
 }
@@ -1128,41 +1340,88 @@ document.addEventListener('click', e => {
   }
 });
 
-document.getElementById('continue-btn').onclick = () => {
-  const next = CASES.find(c => !state.done.includes(c.id));
-  openCase(next ? next.id : 1);
-};
-document.getElementById('accuse-btn').onclick = accuse;
-document.getElementById('hint-btn').onclick = showHint;
-document.getElementById('next-case-btn').onclick = () => {
-  const id = activeCase === 6 ? null : activeCase + 1;
-  if (id) openCase(id);
-  else goto('home');
-};
-document.getElementById('settings-open').onclick = () => openModal('settings-modal');
-document.getElementById('sound-toggle').onclick = () => { state.sound = !state.sound; save(); settingsSync(); ping(600); };
-document.getElementById('sound-setting').onclick = () => { state.sound = !state.sound; save(); settingsSync(); ping(600); };
-document.getElementById('motion-setting').onclick = () => { state.motion = !state.motion; save(); settingsSync(); settingsSync(); };
-document.getElementById('cast-search').oninput = e => renderCast(e.target.value);
-document.getElementById('close-person').onclick = () => document.getElementById('person-detail').classList.remove('show');
-document.getElementById('reset-progress').onclick = () => openModal('confirm-modal');
-document.getElementById('confirm-reset').onclick = () => {
-  const theme = state.theme;
-  state = { done: [], tries: 0, correct: 0, attemptsByCase: {}, theme, sound: false, motion: false, current: 1, selectedProof: null, selectedSuspect: null, filter: 'all', castFilter: 'all' };
-  save();
-  renderCaseTiles();
-  settingsSync();
-  closeModal('confirm-modal');
-  goto('home');
-  toast('Arquivo local reiniciado.');
-};
-document.querySelectorAll('.modal-wrap').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
+// Inicialização segura garantindo que os elementos já existem no DOM
+function initApp() {
+  const continueBtn = document.getElementById('continue-btn');
+  if (continueBtn) {
+    continueBtn.onclick = () => {
+      const next = CASES.find(c => !state.done.includes(c.id));
+      openCase(next ? next.id : 1);
+    };
+  }
 
-load();
-renderCaseTiles();
-renderCast();
-updateProgress();
-settingsSync();
+  const accuseBtn = document.getElementById('accuse-btn');
+  if (accuseBtn) accuseBtn.onclick = accuse;
+
+  const hintBtn = document.getElementById('hint-btn');
+  if (hintBtn) hintBtn.onclick = showHint;
+
+  const nextCaseBtn = document.getElementById('next-case-btn');
+  if (nextCaseBtn) {
+    nextCaseBtn.onclick = () => {
+      const id = activeCase === 6 ? null : activeCase + 1;
+      if (id) openCase(id);
+      else goto('home');
+    };
+  }
+
+  const settingsOpen = document.getElementById('settings-open');
+  if (settingsOpen) settingsOpen.onclick = () => openModal('settings-modal');
+
+  const soundToggle = document.getElementById('sound-toggle');
+  if (soundToggle) {
+    soundToggle.onclick = () => { state.sound = !state.sound; save(); settingsSync(); ping(600); };
+  }
+
+  const soundSetting = document.getElementById('sound-setting');
+  if (soundSetting) {
+    soundSetting.onclick = () => { state.sound = !state.sound; save(); settingsSync(); ping(600); };
+  }
+
+  const motionSetting = document.getElementById('motion-setting');
+  if (motionSetting) {
+    motionSetting.onclick = () => { state.motion = !state.motion; save(); settingsSync(); };
+  }
+
+  const castSearch = document.getElementById('cast-search');
+  if (castSearch) castSearch.oninput = e => renderCast(e.target.value);
+
+  const closePerson = document.getElementById('close-person');
+  if (closePerson) {
+    closePerson.onclick = () => document.getElementById('person-detail').classList.remove('show');
+  }
+
+  const resetProgress = document.getElementById('reset-progress');
+  if (resetProgress) resetProgress.onclick = () => openModal('confirm-modal');
+
+  const confirmReset = document.getElementById('confirm-reset');
+  if (confirmReset) {
+    confirmReset.onclick = () => {
+      const theme = state.theme;
+      state = { done: [], tries: 0, correct: 0, attemptsByCase: {}, theme, sound: false, motion: false, current: 1, selectedProof: null, selectedSuspect: null, filter: 'all', castFilter: 'all' };
+      save();
+      renderCaseTiles();
+      settingsSync();
+      closeModal('confirm-modal');
+      goto('home');
+      toast('Arquivo local reiniciado.');
+    };
+  }
+
+  document.querySelectorAll('.modal-wrap').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
+
+  load();
+  renderCaseTiles();
+  renderCast();
+  updateProgress();
+  settingsSync();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 </script>
 </body>
 </html>
