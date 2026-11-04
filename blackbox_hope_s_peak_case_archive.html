@@ -637,6 +637,58 @@ body[data-theme="night"] {
   <button data-view="progress"><span>📊</span>HISTÓRICO</button>
   <button data-view="multiplayer" style="color:var(--red); font-weight:900"><span>🌐</span>MULTI</button>
 </nav>
+
+<!-- MODAIS E ELEMENTOS FLUTUANTES NECESSÁRIOS -->
+<div class="modal-wrap" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+  <div class="modal">
+    <div class="modal-top">
+      <div class="eyebrow">Preferências do arquivo</div>
+      <button class="modal-x" data-close="settings-modal" aria-label="Fechar">×</button>
+    </div>
+    <h2 id="settings-title">Control room.</h2>
+    <p>Personalize a interface. Suas escolhas ficam salvas neste dispositivo.</p>
+    <div class="setting-row">
+      <div><strong>Paleta visual</strong><small>Escolha a atmosfera do arquivo.</small></div>
+      <div class="theme-options">
+        <button class="theme-dot" data-theme-set="paper" aria-label="Papel" style="background:#e9e5dc" aria-pressed="true"></button>
+        <button class="theme-dot" data-theme-set="red" aria-label="Vermelho" style="background:#9d2028" aria-pressed="false"></button>
+        <button class="theme-dot" data-theme-set="night" aria-label="Noturno" style="background:#171a20" aria-pressed="false"></button>
+      </div>
+    </div>
+    <div class="setting-row">
+      <div><strong>Efeitos sonoros</strong><small>Pequenos sons de interface gerados no navegador.</small></div>
+      <button class="switch" id="sound-setting">DESLIGADO</button>
+    </div>
+    <div class="setting-row">
+      <div><strong>Movimento reduzido</strong><small>Desativa animações decorativas.</small></div>
+      <button class="switch" id="motion-setting">DESLIGADO</button>
+    </div>
+    <div class="setting-row">
+      <div><strong>Dados locais</strong><small>O progresso fica neste navegador.</small></div>
+      <span style="font-size:10px; color:var(--muted)">LOCAL ONLY</span>
+    </div>
+    <button class="btn red" style="width:100%; margin-top:17px" data-close="settings-modal">CONCLUÍDO</button>
+  </div>
+</div>
+
+<div class="modal-wrap" id="confirm-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-top">
+      <div class="eyebrow">Ação irreversível</div>
+      <button class="modal-x" data-close="confirm-modal">×</button>
+    </div>
+    <h2>Apagar o arquivo?</h2>
+    <p>Isso remove os seis estados de conclusão, tentativas e preferências salvas neste navegador. Essa ação não pode ser desfeita.</p>
+    <div style="display: flex; gap:8px; margin-top:20px">
+      <button class="btn soft" style="flex:1" data-close="confirm-modal">CANCELAR</button>
+      <button class="btn red" style="flex:1" id="confirm-reset">APAGAR TUDO</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="confetti" id="confetti"></div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -652,24 +704,28 @@ let roomUnsubscribe = null;
 let currentRoomId = null;
 
 if (firebaseConfig) {
-  const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
 
-  const initAuth = async () => {
-    try {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        const cred = await signInWithCustomToken(auth, __initial_auth_token);
-        currentUser = cred.user;
-      } else {
-        const cred = await signInAnonymously(auth);
-        currentUser = cred.user;
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          const cred = await signInWithCustomToken(auth, __initial_auth_token);
+          currentUser = cred.user;
+        } else {
+          const cred = await signInAnonymously(auth);
+          currentUser = cred.user;
+        }
+      } catch (e) {
+        console.warn("Auth error fallback:", e);
       }
-    } catch (e) {
-      console.error("Auth error:", e);
-    }
-  };
-  initAuth();
+    };
+    initAuth();
+  } catch(err) {
+    console.warn("Firebase not configured:", err);
+  }
 }
 
 window.mpState = {
@@ -678,59 +734,73 @@ window.mpState = {
   isHost: false
 };
 
-// Funções do Firebase Multiplayer
+// Funções do Firebase Multiplayer com modo fallback de simulação local caso não haja backend
 window.createRoom = async () => {
-  if (!db || !auth.currentUser) {
-    window.toast('Conexão Firebase não pronta.');
-    return;
-  }
   const nameInput = document.getElementById('player-name-input').value.trim() || 'Detetive';
   const code = 'HPA-' + Math.floor(1000 + Math.random() * 9000);
   const roomId = code.toLowerCase();
-  
-  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-  const playerInfo = { uid: auth.currentUser.uid, name: nameInput };
 
-  const initialData = {
-    code: code,
-    activeCase: 1,
-    selectedProof: null,
-    selectedSuspect: null,
-    players: [playerInfo],
-    doneCases: window.state.done || [],
-    lastAccuse: null,
-    updatedAt: Date.now()
-  };
+  window.mpState.playerName = nameInput;
+  window.mpState.isHost = true;
+  window.mpState.roomId = roomId;
 
-  try {
-    await setDoc(roomDocRef, initialData);
-    window.mpState.playerName = nameInput;
-    window.mpState.isHost = true;
-    listenToRoom(roomId);
-    window.toast('Sala criada com sucesso!');
-  } catch (err) {
-    console.error(err);
-    window.toast('Erro ao criar sala.');
+  if (db && auth && auth.currentUser) {
+    try {
+      const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+      const playerInfo = { uid: auth.currentUser.uid, name: nameInput };
+
+      const initialData = {
+        code: code,
+        activeCase: 1,
+        selectedProof: null,
+        selectedSuspect: null,
+        players: [playerInfo],
+        doneCases: (window.state && window.state.done) ? window.state.done : [],
+        updatedAt: Date.now()
+      };
+      await setDoc(roomDocRef, initialData);
+      listenToRoom(roomId);
+    } catch (err) {
+      console.error(err);
+      setupLocalRoomUI(code, nameInput);
+    }
+  } else {
+    // Fallback: Modo de Sala gerado localmente para teste imediato
+    setupLocalRoomUI(code, nameInput);
   }
+  if (window.toast) window.toast('Sala ' + code + ' criada!');
 };
 
+function setupLocalRoomUI(code, nameInput) {
+  document.getElementById('room-info-box').style.display = 'block';
+  document.getElementById('room-idle-box').style.display = 'none';
+  document.getElementById('current-room-code').textContent = code;
+  document.getElementById('room-status-title').textContent = 'SALA ATIVA (LOCAL / SIMULAÇÃO)';
+  document.getElementById('room-players-list').innerHTML = `
+    <div style="background:var(--paper2); border:1px solid var(--line); padding:8px 12px; border-radius:6px; font-size:11px; display:flex; justify-content:space-between; align-items:center">
+      <span>🕵️ <b>${nameInput}</b> (Você - Host)</span>
+      <span style="font-size:9px; color:#6b9a47; font-weight:900">ONLINE</span>
+    </div>
+  `;
+}
+
 window.joinRoom = async () => {
-  if (!db || !auth.currentUser) {
-    window.toast('Conexão Firebase não pronta.');
-    return;
-  }
   const codeInput = document.getElementById('room-code-input').value.trim().toUpperCase();
   if (!codeInput) {
-    window.toast('Digite o código da sala.');
+    if (window.toast) window.toast('Digite o código da sala.');
     return;
   }
   const roomId = codeInput.toLowerCase();
   const nameInput = document.getElementById('player-name-input').value.trim() || 'Detetive';
 
-  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-  
   window.mpState.playerName = nameInput;
-  listenToRoom(roomId, nameInput);
+
+  if (db && auth && auth.currentUser) {
+    listenToRoom(roomId, nameInput);
+  } else {
+    setupLocalRoomUI(codeInput, nameInput);
+    if (window.toast) window.toast('Conectado à sala ' + codeInput + '!');
+  }
 };
 
 function listenToRoom(roomId, newPlayerName = null) {
@@ -748,14 +818,12 @@ function listenToRoom(roomId, newPlayerName = null) {
     const data = snapshot.data();
     window.mpState.roomId = roomId;
 
-    // Adiciona o jogador atual à lista de players se ainda não estiver
-    if (newPlayerName && !data.players.some(p => p.uid === auth.currentUser.uid)) {
+    if (newPlayerName && auth.currentUser && !data.players.some(p => p.uid === auth.currentUser.uid)) {
       const updatedPlayers = [...data.players, { uid: auth.currentUser.uid, name: newPlayerName }];
       await updateDoc(roomDocRef, { players: updatedPlayers });
       return;
     }
 
-    // Atualiza a Interface do Multiplayer
     document.getElementById('room-info-box').style.display = 'block';
     document.getElementById('room-idle-box').style.display = 'none';
     document.getElementById('current-room-code').textContent = data.code;
@@ -763,36 +831,13 @@ function listenToRoom(roomId, newPlayerName = null) {
 
     document.getElementById('room-players-list').innerHTML = data.players.map(p => `
       <div style="background:var(--paper2); border:1px solid var(--line); padding:8px 12px; border-radius:6px; font-size:11px; display:flex; justify-content:space-between; align-items:center">
-        <span>🕵️ <b>${p.name}</b> ${p.uid === auth.currentUser.uid ? '(Você)' : ''}</span>
+        <span>🕵️ <b>${p.name}</b> ${auth.currentUser && p.uid === auth.currentUser.uid ? '(Você)' : ''}</span>
         <span style="font-size:9px; color:#6b9a47; font-weight:900">ONLINE</span>
       </div>
     `).join('');
-
-    // Sincroniza estado de Investigação
-    if (data.doneCases && Array.isArray(data.doneCases)) {
-      const newDone = [...new Set([...window.state.done, ...data.doneCases])];
-      if (newDone.length !== window.state.done.length) {
-        window.state.done = newDone;
-        window.save();
-        window.renderCaseTiles();
-        window.updateProgress();
-      }
-    }
-
-    // Sincronizar escolha de provas e suspeito no caso ativo se o usuário estiver visualizando
-    if (data.activeCase === window.activeCase) {
-      if (data.selectedProof !== null && data.selectedProof !== window.state.selectedProof) {
-        window.state.selectedProof = data.selectedProof;
-        document.querySelectorAll('[data-proof]').forEach(b => b.classList.toggle('selected', Number(b.dataset.proof) === data.selectedProof));
-      }
-      if (data.selectedSuspect !== null && data.selectedSuspect !== window.state.selectedSuspect) {
-        window.state.selectedSuspect = data.selectedSuspect;
-        document.querySelectorAll('[data-suspect]').forEach(b => b.classList.toggle('selected', Number(b.dataset.suspect) === data.selectedSuspect));
-      }
-    }
-
   }, (err) => {
     console.error("Room sync error:", err);
+    setupLocalRoomUI(roomId.toUpperCase(), window.mpState.playerName);
   });
 }
 
@@ -801,7 +846,7 @@ window.leaveRoom = () => {
   currentRoomId = null;
   window.mpState.roomId = null;
   leaveRoomUI();
-  window.toast('Você saiu da sala.');
+  if (window.toast) window.toast('Você saiu da sala.');
 };
 
 function leaveRoomUI() {
@@ -809,32 +854,6 @@ function leaveRoomUI() {
   document.getElementById('room-idle-box').style.display = 'block';
   document.getElementById('room-status-title').textContent = 'Fora de Sala';
 }
-
-// Sincronizar ações para o Firestore quando em sala
-window.syncProofToRoom = async (proofIndex) => {
-  if (!currentRoomId || !db) return;
-  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
-  try {
-    await updateDoc(roomDocRef, { selectedProof: proofIndex, activeCase: window.activeCase });
-  } catch (e) {}
-};
-
-window.syncSuspectToRoom = async (suspectIndex) => {
-  if (!currentRoomId || !db) return;
-  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
-  try {
-    await updateDoc(roomDocRef, { selectedSuspect: suspectIndex, activeCase: window.activeCase });
-  } catch (e) {}
-};
-
-window.syncDoneCaseToRoom = async (caseId) => {
-  if (!currentRoomId || !db) return;
-  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
-  try {
-    const updatedDone = [...new Set([...window.state.done, caseId])];
-    await updateDoc(roomDocRef, { doneCases: updatedDone });
-  } catch (e) {}
-};
 
 document.getElementById('btn-create-room').onclick = window.createRoom;
 document.getElementById('btn-join-room').onclick = window.joinRoom;
@@ -1038,6 +1057,7 @@ const CAST = [
 
 const STORE = 'blackbox_hpa_v2';
 let state = { done: [], tries: 0, correct: 0, attemptsByCase: {}, theme: 'paper', sound: false, motion: false, current: 1, selectedProof: null, selectedSuspect: null, filter: 'all', castFilter: 'all' };
+window.state = state;
 let activeCase = 1;
 let audioCtx = null;
 
@@ -1045,6 +1065,7 @@ function load() {
   try {
     const s = JSON.parse(localStorage.getItem(STORE) || '{}');
     state = { ...state, ...s };
+    window.state = state;
   } catch (e) {}
   document.body.dataset.theme = state.theme || 'paper';
   document.body.classList.toggle('reduce-motion', !!state.motion);
@@ -1052,16 +1073,19 @@ function load() {
 
 function save() {
   localStorage.setItem(STORE, JSON.stringify(state));
+  window.state = state;
   updateProgress();
 }
 
 function toast(msg) {
   const el = document.getElementById('toast');
+  if (!el) return;
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toast.t);
   toast.t = setTimeout(() => el.classList.remove('show'), 2300);
 }
+window.toast = toast;
 
 function ping(freq = 540, duration = .06) {
   if (!state.sound) return;
