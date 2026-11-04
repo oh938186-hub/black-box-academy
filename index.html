@@ -391,7 +391,7 @@ body[data-theme="night"] {
       <button class="navbtn" data-view="cases"><span class="navicon">🔍</span>Arquivos de caso</button>
       <button class="navbtn" data-view="cast"><span class="navicon">👥</span>Elenco</button>
       <button class="navbtn" data-view="progress"><span class="navicon">📊</span>Meu progresso</button>
-      <button class="navbtn" data-view="multiplayer" style="color:var(--red)"><span class="navicon">🌐</span>Multiplayer</button>
+      <button class="navbtn active-multi" data-view="multiplayer" style="color:var(--red); font-weight:900; background:color-mix(in srgb, var(--red) 12%, transparent);"><span class="navicon">🌐</span>Multiplayer</button>
     </nav>
     <div class="rail-bottom">
       <div class="progress-mini">
@@ -634,7 +634,8 @@ body[data-theme="night"] {
   <button class="active" data-view="home"><span>📁</span>INÍCIO</button>
   <button data-view="cases"><span>🔍</span>CASOS</button>
   <button data-view="cast"><span>👥</span>ELENCO</button>
-  <button data-view="multiplayer" style="color:var(--red)"><span>🌐</span>MULTI</button>
+  <button data-view="progress"><span>📊</span>HISTÓRICO</button>
+  <button data-view="multiplayer" style="color:var(--red); font-weight:900"><span>🌐</span>MULTI</button>
 </nav>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
