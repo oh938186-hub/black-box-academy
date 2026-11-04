@@ -689,171 +689,152 @@ body[data-theme="night"] {
 <div class="toast" id="toast" role="status"></div>
 <div class="confetti" id="confetti"></div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'blackbox-hpa-app';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-
-let db = null;
-let auth = null;
-let currentUser = null;
-let roomUnsubscribe = null;
-let currentRoomId = null;
-
-if (firebaseConfig) {
-  try {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    auth = getAuth(app);
-
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          const cred = await signInWithCustomToken(auth, __initial_auth_token);
-          currentUser = cred.user;
-        } else {
-          const cred = await signInAnonymously(auth);
-          currentUser = cred.user;
-        }
-      } catch (e) {
-        console.warn("Auth error fallback:", e);
-      }
-    };
-    initAuth();
-  } catch(err) {
-    console.warn("Firebase not configured:", err);
-  }
-}
-
+<script>
+// Sistema Multiplayer Nativo (BroadcastChannel / LocalStorage)
+// Livre de erros de bloqueio de WebSocket/SecurityError
 window.mpState = {
   roomId: null,
   playerName: 'Detetive',
-  isHost: false
+  isHost: false,
+  channel: null,
+  players: []
 };
 
-// Funções do Firebase Multiplayer com modo fallback de simulação local caso não haja backend
-window.createRoom = async () => {
-  const nameInput = document.getElementById('player-name-input').value.trim() || 'Detetive';
+function initBroadcastChannel(code) {
+  if (window.mpState.channel) {
+    window.mpState.channel.close();
+  }
+  window.mpState.channel = new BroadcastChannel('hpa_room_' + code);
+  
+  window.mpState.channel.onmessage = (event) => {
+    const data = event.data;
+    if (!data) return;
+
+    if (data.type === 'PING_JOIN') {
+      if (window.mpState.isHost) {
+        // Adiciona o novo participante e transmite a lista atualizada
+        const exists = window.mpState.players.some(p => p.name === data.playerName);
+        if (!exists) {
+          window.mpState.players.push({ name: data.playerName, isHost: false });
+        }
+        broadcastState();
+        if (window.toast) window.toast(data.playerName + ' entrou na sala!');
+      }
+    } else if (data.type === 'ROOM_STATE') {
+      window.mpState.players = data.players;
+      updatePlayersListUI(data.players);
+    } else if (data.type === 'SYNC_ACTION') {
+      handleIncomingSync(data);
+    } else if (data.type === 'LEAVE') {
+      window.mpState.players = window.mpState.players.filter(p => p.name !== data.playerName);
+      if (window.mpState.isHost) broadcastState();
+      else updatePlayersListUI(window.mpState.players);
+    }
+  };
+}
+
+function broadcastState() {
+  updatePlayersListUI(window.mpState.players);
+  if (window.mpState.channel) {
+    window.mpState.channel.postMessage({
+      type: 'ROOM_STATE',
+      players: window.mpState.players
+    });
+  }
+}
+
+window.createRoom = () => {
+  const nameInput = document.getElementById('player-name-input').value.trim() || 'Detetive Host';
   const code = 'HPA-' + Math.floor(1000 + Math.random() * 9000);
-  const roomId = code.toLowerCase();
 
   window.mpState.playerName = nameInput;
   window.mpState.isHost = true;
-  window.mpState.roomId = roomId;
+  window.mpState.roomId = code;
+  window.mpState.players = [{ name: nameInput + ' (Você - Host)', isHost: true }];
 
-  if (db && auth && auth.currentUser) {
-    try {
-      const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-      const playerInfo = { uid: auth.currentUser.uid, name: nameInput };
-
-      const initialData = {
-        code: code,
-        activeCase: 1,
-        selectedProof: null,
-        selectedSuspect: null,
-        players: [playerInfo],
-        doneCases: (window.state && window.state.done) ? window.state.done : [],
-        updatedAt: Date.now()
-      };
-      await setDoc(roomDocRef, initialData);
-      listenToRoom(roomId);
-    } catch (err) {
-      console.error(err);
-      setupLocalRoomUI(code, nameInput);
-    }
-  } else {
-    // Fallback: Modo de Sala gerado localmente para teste imediato
-    setupLocalRoomUI(code, nameInput);
-  }
-  if (window.toast) window.toast('Sala ' + code + ' criada!');
+  initBroadcastChannel(code);
+  setupHostRoomUI(code, nameInput);
+  if (window.toast) window.toast('Sala ' + code + ' criada! Compartilhe o código.');
 };
 
-function setupLocalRoomUI(code, nameInput) {
+function setupHostRoomUI(code, hostName) {
   document.getElementById('room-info-box').style.display = 'block';
   document.getElementById('room-idle-box').style.display = 'none';
   document.getElementById('current-room-code').textContent = code;
-  document.getElementById('room-status-title').textContent = 'SALA ATIVA (LOCAL / SIMULAÇÃO)';
-  document.getElementById('room-players-list').innerHTML = `
-    <div style="background:var(--paper2); border:1px solid var(--line); padding:8px 12px; border-radius:6px; font-size:11px; display:flex; justify-content:space-between; align-items:center">
-      <span>🕵️ <b>${nameInput}</b> (Você - Host)</span>
-      <span style="font-size:9px; color:#6b9a47; font-weight:900">ONLINE</span>
-    </div>
-  `;
+  document.getElementById('room-status-title').textContent = 'SALA ATIVA (HOST)';
+  updatePlayersListUI(window.mpState.players);
 }
 
-window.joinRoom = async () => {
+window.joinRoom = () => {
   const codeInput = document.getElementById('room-code-input').value.trim().toUpperCase();
   if (!codeInput) {
     if (window.toast) window.toast('Digite o código da sala.');
     return;
   }
-  const roomId = codeInput.toLowerCase();
   const nameInput = document.getElementById('player-name-input').value.trim() || 'Detetive';
 
   window.mpState.playerName = nameInput;
+  window.mpState.isHost = false;
+  window.mpState.roomId = codeInput;
 
-  if (db && auth && auth.currentUser) {
-    listenToRoom(roomId, nameInput);
-  } else {
-    setupLocalRoomUI(codeInput, nameInput);
-    if (window.toast) window.toast('Conectado à sala ' + codeInput + '!');
+  initBroadcastChannel(codeInput);
+
+  // Notifica o Host que um novo detetive entrou
+  window.mpState.channel.postMessage({
+    type: 'PING_JOIN',
+    playerName: nameInput
+  });
+
+  document.getElementById('room-info-box').style.display = 'block';
+  document.getElementById('room-idle-box').style.display = 'none';
+  document.getElementById('current-room-code').textContent = codeInput;
+  document.getElementById('room-status-title').textContent = 'CONECTADO À SALA';
+  if (window.toast) window.toast('Conectado à sala ' + codeInput + '!');
+};
+
+function updatePlayersListUI(players) {
+  const listEl = document.getElementById('room-players-list');
+  if (!listEl) return;
+  listEl.innerHTML = players.map(p => `
+    <div style="background:var(--paper2); border:1px solid var(--line); padding:8px 12px; border-radius:6px; font-size:11px; display:flex; justify-content:space-between; align-items:center">
+      <span>🕵️ <b>${p.name}</b></span>
+      <span style="font-size:9px; color:#6b9a47; font-weight:900">ONLINE</span>
+    </div>
+  `).join('');
+}
+
+function handleIncomingSync(data) {
+  if (data.action === 'proof' && window.chooseProof) {
+    window.chooseProof(data.value);
+  } else if (data.action === 'suspect' && window.chooseSuspect) {
+    window.chooseSuspect(data.value);
+  }
+}
+
+window.syncProofToRoom = (proofIndex) => {
+  if (window.mpState.channel) {
+    window.mpState.channel.postMessage({ type: 'SYNC_ACTION', action: 'proof', value: proofIndex });
   }
 };
 
-function listenToRoom(roomId, newPlayerName = null) {
-  if (roomUnsubscribe) roomUnsubscribe();
-  currentRoomId = roomId;
-
-  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-
-  roomUnsubscribe = onSnapshot(roomDocRef, async (snapshot) => {
-    if (!snapshot.exists()) {
-      window.toast('Sala não encontrada.');
-      leaveRoomUI();
-      return;
-    }
-    const data = snapshot.data();
-    window.mpState.roomId = roomId;
-
-    if (newPlayerName && auth.currentUser && !data.players.some(p => p.uid === auth.currentUser.uid)) {
-      const updatedPlayers = [...data.players, { uid: auth.currentUser.uid, name: newPlayerName }];
-      await updateDoc(roomDocRef, { players: updatedPlayers });
-      return;
-    }
-
-    document.getElementById('room-info-box').style.display = 'block';
-    document.getElementById('room-idle-box').style.display = 'none';
-    document.getElementById('current-room-code').textContent = data.code;
-    document.getElementById('room-status-title').textContent = 'Conectado em Tempo Real';
-
-    document.getElementById('room-players-list').innerHTML = data.players.map(p => `
-      <div style="background:var(--paper2); border:1px solid var(--line); padding:8px 12px; border-radius:6px; font-size:11px; display:flex; justify-content:space-between; align-items:center">
-        <span>🕵️ <b>${p.name}</b> ${auth.currentUser && p.uid === auth.currentUser.uid ? '(Você)' : ''}</span>
-        <span style="font-size:9px; color:#6b9a47; font-weight:900">ONLINE</span>
-      </div>
-    `).join('');
-  }, (err) => {
-    console.error("Room sync error:", err);
-    setupLocalRoomUI(roomId.toUpperCase(), window.mpState.playerName);
-  });
-}
-
-window.leaveRoom = () => {
-  if (roomUnsubscribe) roomUnsubscribe();
-  currentRoomId = null;
-  window.mpState.roomId = null;
-  leaveRoomUI();
-  if (window.toast) window.toast('Você saiu da sala.');
+window.syncSuspectToRoom = (suspectIndex) => {
+  if (window.mpState.channel) {
+    window.mpState.channel.postMessage({ type: 'SYNC_ACTION', action: 'suspect', value: suspectIndex });
+  }
 };
 
-function leaveRoomUI() {
+window.leaveRoom = () => {
+  if (window.mpState.channel) {
+    window.mpState.channel.postMessage({ type: 'LEAVE', playerName: window.mpState.playerName });
+    window.mpState.channel.close();
+  }
+  window.mpState.channel = null;
+  window.mpState.players = [];
   document.getElementById('room-info-box').style.display = 'none';
   document.getElementById('room-idle-box').style.display = 'block';
   document.getElementById('room-status-title').textContent = 'Fora de Sala';
-}
+  if (window.toast) window.toast('Você saiu da sala.');
+};
 
 document.getElementById('btn-create-room').onclick = window.createRoom;
 document.getElementById('btn-join-room').onclick = window.joinRoom;
