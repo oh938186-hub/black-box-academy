@@ -1,0 +1,1428 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e9e5dc">
+<meta name="description" content="Blackbox Academy - arquivo interativo de mistérios, evidências e julgamentos. Uma experiência de fã inspirada em Danganronpa.">
+<title>BLACKBOX // Hope's Peak Case Archive</title>
+<style>
+:root {
+  --paper: #e9e5dc;
+  --paper2: #f5f2ea;
+  --ink: #171a20;
+  --muted: #77766e;
+  --line: #c9c3b6;
+  --red: #c83d32;
+  --red2: #ef6656;
+  --acid: #d8ed71;
+  --card: #f8f5ed;
+  --dark: #20232b;
+  --dark2: #2c303a;
+  --white: #fffdf7;
+  --shadow: 0 18px 46px #29251d18;
+  --radius: 18px;
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+button, input { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible {
+  outline: 3px solid var(--red2);
+  outline-offset: 3px;
+}
+::selection { background: var(--acid); color: var(--ink); }
+
+body[data-theme="red"] {
+  --paper: #e8dfd9;
+  --paper2: #f7eeea;
+  --ink: #241919;
+  --muted: #806b68;
+  --line: #d0aaa1;
+  --red: #9d2028;
+  --red2: #e2545a;
+  --acid: #f1bd79;
+  --card: #fbf1eb;
+  --dark: #25191c;
+  --dark2: #382427;
+}
+body[data-theme="night"] {
+  --paper: #171a20;
+  --paper2: #20242d;
+  --ink: #f0eee8;
+  --muted: #a9a89f;
+  --line: #424753;
+  --red: #ff695a;
+  --red2: #ff927e;
+  --acid: #d8ed71;
+  --card: #242933;
+  --dark: #101319;
+  --dark2: #2b303b;
+  --white: #f8f5ed;
+  --shadow: 0 18px 46px #0005;
+}
+
+.noise {
+  position: fixed; inset: 0; pointer-events: none; z-index: 20; opacity: 0.075;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
+}
+
+.topbar {
+  height: 58px; border-bottom: 1px solid var(--line); display: flex; align-items: center;
+  justify-content: space-between; padding: 0 clamp(16px, 4vw, 54px); font-size: 11px;
+  letter-spacing: .17em; text-transform: uppercase; color: var(--muted); position: relative; z-index: 5;
+}
+.topbrand { display: flex; align-items: center; gap: 10px; font-weight: 900; color: var(--ink); }
+.brandmark {
+  width: 24px; height: 24px; background: var(--red); display: grid; place-items: center;
+  color: white; font-size: 13px; font-weight: 1000;
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%);
+}
+.topright { display: flex; align-items: center; gap: 18px; }
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #6b9a47; display: inline-block;
+  box-shadow: 0 0 0 4px #6b9a4720; margin-right: 6px;
+}
+
+.app { display: grid; grid-template-columns: 232px minmax(0,1fr); max-width: 1600px; margin: 0 auto; min-height: calc(100vh - 58px); }
+.rail { border-right: 1px solid var(--line); padding: 28px 18px 30px 26px; display: flex; flex-direction: column; position: relative; }
+.rail-head { padding: 10px 8px 34px; }
+.rail-kicker, .eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: .2em; color: var(--muted); font-weight: 800; }
+.rail-title { font-family: var(--serif); font-size: 26px; line-height: 1.02; letter-spacing: -.04em; margin: 10px 0 0; }
+.rail-title span { color: var(--red); font-style: italic; }
+.rail-nav { display: grid; gap: 7px; }
+.navbtn {
+  border: 0; background: transparent; color: var(--muted); text-align: left; display: flex; align-items: center; gap: 12px;
+  padding: 12px 11px; border-radius: 10px; font-weight: 700; font-size: 13px; transition: .2s;
+}
+.navbtn:hover { background: var(--paper2); color: var(--ink); transform: translateX(2px); }
+.navbtn.active { background: var(--dark); color: #fff; }
+.navicon { width: 22px; text-align: center; font-size: 16px; }
+.rail-bottom { margin-top: auto; }
+.progress-mini { background: var(--paper2); border: 1px solid var(--line); border-radius: 14px; padding: 15px; margin: 28px 2px 12px; }
+.mini-top { display: flex; justify-content: space-between; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; font-weight: 900; }
+.mini-count { font-family: var(--serif); font-size: 30px; margin: 10px 0 8px; }
+.meter { height: 5px; background: var(--line); border-radius: 8px; overflow: hidden; }
+.meter > i { display: block; height: 100%; width: 0; background: var(--red); transition: width .6s; }
+.rail-foot { font-size: 10px; line-height: 1.6; color: var(--muted); padding: 8px; }
+
+.main { min-width: 0; padding: 0 clamp(18px, 4vw, 58px) 70px; }
+.mainhead { height: 68px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); gap: 12px; }
+.crumb { font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.crumb b { color: var(--red); }
+.head-actions { display: flex; gap: 8px; }
+.iconbtn {
+  border: 1px solid var(--line); width: 36px; height: 36px; border-radius: 50%; background: transparent;
+  color: var(--ink); display: grid; place-items: center; transition: .2s;
+}
+.iconbtn:hover { background: var(--ink); color: var(--paper); transform: rotate(-8deg); }
+
+.view { display: none; animation: enter .42s cubic-bezier(.2,.7,.2,1) both; }
+.view.active { display: block; }
+@keyframes enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+.hero {
+  margin: 32px 0 28px; background: var(--dark); color: #f7f1e8; min-height: 350px; border-radius: 22px;
+  position: relative; overflow: hidden; display: grid; grid-template-columns: 1.15fr .85fr; box-shadow: var(--shadow);
+}
+.hero:before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(112deg, transparent 52%, #ffffff0b 52.2%, transparent 52.8%), repeating-linear-gradient(0deg, transparent 0 34px, #ffffff04 35px);
+}
+.hero-copy { padding: clamp(28px, 4vw, 58px); position: relative; z-index: 1; }
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 8px; border: 1px solid #ffffff3b; padding: 7px 10px;
+  font-size: 9px; letter-spacing: .19em; text-transform: uppercase; color: #d0cbc0;
+}
+.hero-tag:before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--acid); }
+.hero h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(47px, 7vw, 92px); letter-spacing: -.07em; line-height: .87; margin: 28px 0 18px; max-width: 700px; }
+.hero h1 em { color: var(--acid); font-style: normal; font-weight: 400; }
+.hero p { max-width: 420px; color: #cbc8c0; line-height: 1.65; font-size: 14px; margin: 0; }
+.hero-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 28px; }
+
+.btn {
+  border: 0; border-radius: 7px; padding: 13px 17px; font-weight: 850; font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; transition: .2s; display: inline-flex; gap: 9px; align-items: center; justify-content: center;
+}
+.btn.primary { background: var(--acid); color: #1a1c20; }
+.btn.primary:hover { transform: translateY(-3px); box-shadow: 0 9px 22px #d8ed7130; }
+.btn.outline { border: 1px solid #ffffff60; background: transparent; color: #fff; }
+.btn.outline:hover { background: #ffffff13; }
+.btn.ink { background: var(--dark); color: white; }
+.btn.ink:hover { background: var(--red); }
+.btn.red { background: var(--red); color: #fff; }
+.btn.red:hover { filter: brightness(1.12); transform: translateY(-2px); }
+.btn.soft { background: var(--paper2); border: 1px solid var(--line); color: var(--ink); }
+.btn:disabled { opacity: .4; cursor: not-allowed; transform: none!important; }
+
+.hero-art { position: relative; display: grid; place-items: center; min-height: 290px; }
+.seal { width: min(75%, 300px); aspect-ratio: 1; border: 1px solid #ffffff4d; border-radius: 50%; position: relative; display: grid; place-items: center; transform: rotate(-12deg); }
+.seal:before, .seal:after { content: ""; position: absolute; border: 1px solid #ffffff42; border-radius: 50%; inset: 14px; }
+.seal:after { inset: 30px; border-style: dashed; }
+.seal-core {
+  width: 47%; aspect-ratio: 1; background: var(--red);
+  clip-path: polygon(50% 0, 93% 22%, 93% 78%, 50% 100%, 7% 78%, 7% 22%);
+  display: grid; place-items: center; color: white; font-family: var(--serif); font-size: clamp(37px, 6vw, 67px); font-weight: 900; box-shadow: 0 0 55px #c83d3240;
+}
+.seal-label { position: absolute; bottom: 10%; font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: #c9c3b6; }
+.seal-orbit { position: absolute; width: 12px; height: 12px; background: var(--acid); border-radius: 50%; top: 13%; right: 17%; box-shadow: 0 0 0 8px #d8ed7120, 0 0 25px var(--acid); }
+.hero-index { position: absolute; right: 24px; top: 22px; font-size: 10px; color: #aaa59c; letter-spacing: .18em; writing-mode: vertical-rl; }
+
+.section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin: 34px 0 16px; }
+.section-head h2 { font-family: var(--serif); font-weight: 500; font-size: clamp(26px, 3vw, 39px); letter-spacing: -.04em; margin: 5px 0 0; }
+.section-head p { margin: 0; color: var(--muted); font-size: 12px; }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat { border-top: 2px solid var(--ink); padding: 14px 13px 12px; background: var(--paper2); }
+.stat span { display: block; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.stat strong { display: block; font-family: var(--serif); font-size: 32px; font-weight: 500; margin-top: 5px; }
+.stat small { font-size: 11px; color: var(--muted); }
+
+.case-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px; }
+.case-tile {
+  background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 17px; position: relative; overflow: hidden;
+  min-height: 186px; display: flex; flex-direction: column; transition: .25s; cursor: pointer;
+}
+.case-tile:hover { transform: translateY(-5px); box-shadow: var(--shadow); border-color: var(--red); }
+.case-tile:after { content: attr(data-num); position: absolute; right: 6px; top: -20px; font-family: var(--serif); font-size: 94px; color: var(--line); opacity: .34; pointer-events: none; }
+.tile-top { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+.file-code { font-size: 10px; letter-spacing: .15em; font-weight: 900; color: var(--red); }
+.difficulty { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); border: 1px solid var(--line); padding: 5px 7px; border-radius: 4px; }
+.case-tile h3 { font-family: var(--serif); font-size: 23px; font-weight: 500; line-height: 1.05; margin: 25px 0 7px; position: relative; z-index: 1; }
+.case-tile p { font-size: 11px; line-height: 1.5; color: var(--muted); margin: 0 0 16px; max-width: 250px; position: relative; z-index: 1; }
+.tile-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; position: relative; z-index: 1; }
+.tile-foot .arr { font-size: 18px; color: var(--red); }
+.case-tile.done { border-color: #7d9f53; }
+.case-tile.done .file-code { color: #678544; }
+.case-tile.locked { opacity: .57; cursor: not-allowed; }
+.case-tile.locked:hover { transform: none; box-shadow: none; border-color: var(--line); }
+
+.callout { margin: 24px 0; background: var(--acid); padding: 20px 22px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px; color: #20231b; }
+.callout strong { font-family: var(--serif); font-size: 23px; font-weight: 500; }
+.callout p { margin: 4px 0 0; font-size: 11px; opacity: .75; }
+
+.page-title { padding: 35px 0 22px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.page-title h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(40px, 5vw, 64px); letter-spacing: -.06em; line-height: .95; margin: 7px 0 0; }
+.page-title p { color: var(--muted); max-width: 390px; font-size: 13px; line-height: 1.6; margin: 0; }
+.filter-row { display: flex; gap: 7px; flex-wrap: wrap; margin: 19px 0; align-items: center; }
+.chip { border: 1px solid var(--line); background: transparent; color: var(--muted); padding: 8px 11px; border-radius: 99px; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .08em; }
+.chip.active, .chip:hover { background: var(--dark); border-color: var(--dark); color: white; }
+
+.case-layout { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(270px,.9fr); gap: 18px; margin-top: 22px; }
+.dossier { background: var(--card); border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
+.dossier-head { padding: 20px 22px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dossier-head h2 { font-family: var(--serif); font-size: 30px; font-weight: 500; margin: 5px 0 0; }
+.stamp { border: 2px solid var(--red); color: var(--red); font-size: 9px; letter-spacing: .15em; font-weight: 1000; padding: 7px 8px; transform: rotate(-7deg); text-transform: uppercase; }
+.dossier-body { padding: 22px; }
+.scene-strip { background: var(--dark); color: #f5f1e9; padding: 19px; border-radius: 9px; margin-bottom: 18px; position: relative; overflow: hidden; }
+.scene-strip:after { content: ""; position: absolute; right: -20px; bottom: -42px; width: 140px; height: 140px; border: 1px solid #ffffff2c; transform: rotate(35deg); }
+.scene-strip .eyebrow { color: var(--acid); }
+.scene-strip p { font-family: var(--serif); font-size: 19px; line-height: 1.4; margin: 9px 0 0; max-width: 620px; }
+.bodycopy { color: var(--muted); font-size: 13px; line-height: 1.75; }
+.subhead { display: flex; align-items: center; justify-content: space-between; margin: 23px 0 10px; }
+.subhead h3 { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; margin: 0; }
+.subhead span { font-size: 10px; color: var(--muted); }
+
+.evidence-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+.evidence { border: 1px solid var(--line); background: var(--paper2); border-radius: 9px; padding: 13px; text-align: left; color: var(--ink); min-height: 112px; position: relative; transition: .2s; }
+.evidence:hover { border-color: var(--red); transform: translateY(-2px); }
+.evidence.selected { border: 2px solid var(--red); background: color-mix(in srgb, var(--red) 8%, var(--paper2)); padding: 12px; }
+.evidence.selected:after { content: "SELECIONADA"; position: absolute; right: 8px; top: 8px; color: var(--red); font-size: 8px; letter-spacing: .1em; font-weight: 1000; }
+.e-icon { font-size: 20px; }
+.evidence strong { display: block; font-size: 12px; margin: 9px 0 4px; }
+.evidence small { font-size: 10px; line-height: 1.4; color: var(--muted); display: block; }
+
+.suspect-list { display: grid; gap: 8px; }
+.suspect { display: grid; grid-template-columns: 42px 1fr auto; gap: 10px; align-items: center; text-align: left; background: var(--paper2); border: 1px solid var(--line); border-radius: 9px; padding: 10px; color: var(--ink); transition: .2s; }
+.suspect:hover { border-color: var(--red); }
+.suspect.selected { border: 2px solid var(--red); padding: 9px; background: color-mix(in srgb, var(--red) 7%, var(--paper2)); }
+.avatar { width: 40px; height: 40px; background: var(--dark); color: var(--acid); display: grid; place-items: center; font-family: var(--serif); font-size: 16px; font-weight: 700; border-radius: 6px; }
+.suspect strong { font-size: 12px; display: block; }
+.suspect small { font-size: 10px; color: var(--muted); display: block; margin-top: 3px; }
+.radio-dot { width: 15px; height: 15px; border: 1px solid var(--muted); border-radius: 50%; }
+.suspect.selected .radio-dot { border: 5px solid var(--red); }
+
+.accuse-panel { margin-top: 17px; background: var(--dark); color: #f7f2e9; border-radius: 12px; padding: 19px; }
+.accuse-panel .eyebrow { color: var(--acid); }
+.accuse-panel h3 { font-family: var(--serif); font-size: 27px; font-weight: 500; margin: 8px 0; }
+.accuse-panel p { font-size: 11px; color: #c4c0b7; line-height: 1.55; margin: 0 0 14px; }
+.accuse-panel .btn { width: 100%; }
+.feedback { margin-top: 12px; border-radius: 8px; padding: 12px; font-size: 12px; line-height: 1.55; display: none; }
+.feedback.show { display: block; animation: enter .25s; }
+.feedback.bad { background: #a334322a; border: 1px solid #d9625b; color: #ffd1ca; }
+.feedback.good { background: #d8ed7120; border: 1px solid var(--acid); color: #eff7c2; }
+.hint-btn { background: none; border: 0; color: var(--acid); font-size: 10px; text-decoration: underline; padding: 12px 0 0; }
+
+.side-stack { display: grid; gap: 14px; align-content: start; }
+.brief-card { background: var(--paper2); border: 1px solid var(--line); border-radius: 13px; padding: 18px; }
+.brief-card h3 { font-family: var(--serif); font-weight: 500; font-size: 22px; margin: 7px 0; }
+.brief-card p { font-size: 12px; line-height: 1.65; color: var(--muted); margin: 0; }
+.timeline { display: grid; gap: 12px; margin-top: 14px; }
+.time-row { display: grid; grid-template-columns: 54px 1fr; gap: 10px; font-size: 11px; line-height: 1.45; }
+.time-row b { color: var(--red); font-size: 10px; letter-spacing: .07em; }
+.warning-note { border-left: 3px solid var(--red); padding: 11px 13px; background: color-mix(in srgb, var(--red) 7%, var(--paper2)); font-size: 11px; line-height: 1.55; color: var(--muted); margin-top: 13px; }
+
+.result-banner { border: 1px solid var(--line); background: var(--paper2); border-radius: 15px; padding: 26px; margin: 22px 0; text-align: center; display: none; }
+.result-banner.show { display: block; animation: resultPop .6s both; }
+@keyframes resultPop { 0% { opacity: 0; transform: scale(.96); } 60% { transform: scale(1.015); } 100% { opacity: 1; transform: scale(1); } }
+.result-banner .bigcheck { width: 56px; height: 56px; background: var(--acid); color: var(--ink); border-radius: 50%; display: grid; place-items: center; font-size: 27px; margin: 0 auto 12px; }
+.result-banner h2 { font-family: var(--serif); font-size: 36px; font-weight: 500; margin: 7px; }
+.result-banner p { font-size: 12px; color: var(--muted); line-height: 1.6; max-width: 550px; margin: 0 auto 17px; }
+
+.confetti { position: fixed; pointer-events: none; z-index: 100; inset: 0; overflow: hidden; }
+.confetti i { position: absolute; top: -20px; width: 8px; height: 14px; background: var(--red); animation: fall 1.8s ease-in forwards; }
+@keyframes fall { to { transform: translate3d(var(--dx), 110vh, 0) rotate(780deg); opacity: .2; } }
+
+.cast-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-top: 22px; }
+.person { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; cursor: pointer; transition: .2s; }
+.person:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.person-art { height: 130px; background: var(--dark); display: grid; place-items: center; position: relative; overflow: hidden; }
+.person-art:before { content: ""; position: absolute; width: 112px; height: 112px; border: 1px solid #fff3; border-radius: 50%; box-shadow: 0 0 0 16px #fff08, 0 0 0 32px #fff05; }
+.person-glyph { position: relative; width: 66px; height: 66px; background: var(--accent, var(--red)); clip-path: polygon(50% 0, 90% 22%, 100% 65%, 50% 100%, 0 65%, 10% 22%); display: grid; place-items: center; color: #171a20; font-family: var(--serif); font-size: 24px; font-weight: 900; }
+.person-art small { position: absolute; bottom: 9px; left: 12px; color: #ffffffa3; font-size: 8px; letter-spacing: .17em; }
+.person-info { padding: 13px; }
+.person-info h3 { font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.person-info p { font-size: 10px; color: var(--muted); margin: 0; }
+.person-info .talent { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--red); font-weight: 900; margin-top: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.person-detail { margin-top: 20px; background: var(--dark); color: white; border-radius: 14px; padding: 22px; display: none; grid-template-columns: 100px 1fr; gap: 18px; }
+.person-detail.show { display: grid; animation: enter .3s; }
+.detail-glyph { height: 100px; display: grid; place-items: center; background: var(--accent, var(--red)); color: var(--ink); font: 700 35px var(--serif); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.person-detail h3 { font: 500 29px var(--serif); margin: 0 0 5px; }
+.person-detail p { color: #cac7c0; font-size: 12px; line-height: 1.6; margin: 8px 0; }
+.person-detail button { background: none; border: 0; color: var(--acid); text-decoration: underline; font-size: 10px; padding: 3px 0; }
+
+.progress-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 22px; }
+.progress-card { background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 20px; }
+.progress-card h3 { font: 500 25px var(--serif); margin: 5px 0 15px; }
+.progress-list { display: grid; gap: 10px; }
+.progress-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; font-size: 11px; }
+.progress-no { width: 32px; height: 32px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--red); font-weight: 900; }
+.progress-row small { color: var(--muted); }
+.empty-state { text-align: center; padding: 36px 18px; color: var(--muted); grid-column: 1 / -1; }
+.empty-state strong { display: block; color: var(--ink); font-family: var(--serif); font-size: 25px; font-weight: 500; margin: 8px; }
+
+.modal-wrap { position: fixed; inset: 0; background: #101319b8; z-index: 80; display: none; align-items: center; justify-content: center; padding: 18px; backdrop-filter: blur(7px); }
+.modal-wrap.open { display: flex; }
+.modal { background: var(--paper); color: var(--ink); border-radius: 15px; width: min(100%, 490px); padding: 25px; box-shadow: 0 25px 80px #0005; animation: enter .25s; }
+.modal-top { display: flex; justify-content: space-between; align-items: center; }
+.modal h2 { font: 500 35px var(--serif); margin: 12px 0 7px; }
+.modal p { font-size: 12px; color: var(--muted); line-height: 1.65; }
+.modal-x { border: 1px solid var(--line); background: transparent; width: 32px; height: 32px; border-radius: 50%; color: var(--ink); }
+.setting-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 0; border-top: 1px solid var(--line); }
+.setting-row strong { font-size: 12px; display: block; }
+.setting-row small { font-size: 10px; color: var(--muted); }
+.switch { border: 1px solid var(--line); background: var(--paper2); padding: 5px 10px; border-radius: 30px; font-size: 10px; font-weight: 900; }
+.theme-options { display: flex; gap: 7px; }
+.theme-dot { border: 2px solid transparent; width: 27px; height: 27px; border-radius: 50%; }
+.theme-dot[aria-pressed="true"] { outline: 2px solid var(--red); outline-offset: 2px; }
+
+.toast { position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--dark); color: #fff; padding: 12px 17px; border-radius: 8px; font-size: 11px; z-index: 120; transition: .25s; box-shadow: var(--shadow); }
+.toast.show { opacity: 1; transform: translate(-50%,0); }
+.mobile-nav { display: none; }
+.footer { border-top: 1px solid var(--line); margin-top: 45px; padding-top: 18px; display: flex; justify-content: space-between; gap: 14px; color: var(--muted); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+
+@media(max-width: 1050px) {
+  .app { grid-template-columns: 190px minmax(0,1fr); }
+  .rail { padding-left: 15px; padding-right: 12px; }
+  .case-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .cast-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .hero { grid-template-columns: 1.2fr .8fr; }
+}
+@media(max-width: 760px) {
+  .topbar { height: 48px; padding: 0 15px; font-size: 9px; }
+  .topright .top-meta { display: none; }
+  .app { display: block; min-height: calc(100vh - 48px); }
+  .rail { display: none; }
+  .main { padding: 0 15px 90px; }
+  .mainhead { height: 55px; }
+  .hero { grid-template-columns: 1fr; margin-top: 18px; min-height: 0; }
+  .hero-copy { padding: 28px 23px 12px; }
+  .hero h1 { font-size: clamp(52px,14vw,78px); margin: 22px 0 14px; }
+  .hero-art { min-height: 185px; padding-bottom: 10px; }
+  .seal { width: 155px; }
+  .hero-index { right: 12px; top: 14px; }
+  .stats { gap: 7px; }
+  .stat { padding: 12px 9px; }
+  .stat strong { font-size: 25px; }
+  .section-head { align-items: flex-start; flex-direction: column; }
+  .case-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+  .case-tile { padding: 13px; min-height: 175px; }
+  .page-title { display: block; padding: 26px 0 17px; }
+  .case-layout { grid-template-columns: 1fr; gap: 12px; margin-top: 15px; }
+  .dossier-body { padding: 15px; }
+  .cast-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+  .person-detail { grid-template-columns: 66px 1fr; padding: 15px; gap: 12px; }
+  .progress-layout { grid-template-columns: 1fr; }
+  .footer { font-size: 8px; line-height: 1.5; }
+  .mobile-nav {
+    display: grid; position: fixed; z-index: 30; bottom: 0; left: 0; right: 0;
+    grid-template-columns: repeat(4,1fr); padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--paper2) 94%, transparent); border-top: 1px solid var(--line); backdrop-filter: blur(14px);
+  }
+  .mobile-nav button { border: 0; background: transparent; color: var(--muted); display: grid; justify-items: center; gap: 3px; font-size: 9px; font-weight: 850; padding: 4px; }
+  .mobile-nav button.active { color: var(--red); }
+}
+</style>
+</head>
+<body data-theme="paper">
+<div class="noise"></div>
+<header class="topbar">
+  <div class="topbrand"><span class="brandmark">B</span><span>BLACKBOX/HPA</span></div>
+  <div class="topright"><span class="top-meta"><i class="live-dot"></i>ARQUIVO ONLINE</span><span>EDIÇÃO 2026&nbsp;&nbsp;Nº 09</span></div>
+</header>
+<div class="app">
+  <aside class="rail">
+    <div class="rail-head">
+      <div class="rail-kicker">Hope's Peak Academy</div>
+      <div class="rail-title">The case<br><span>archive.</span></div>
+    </div>
+    <nav class="rail-nav" aria-label="Navegação principal">
+      <button class="navbtn active" data-view="home"><span class="navicon">📁</span>Visão geral</button>
+      <button class="navbtn" data-view="cases"><span class="navicon">🔍</span>Arquivos de caso</button>
+      <button class="navbtn" data-view="cast"><span class="navicon">👥</span>Elenco</button>
+      <button class="navbtn" data-view="progress"><span class="navicon">📊</span>Meu progresso</button>
+      <button class="navbtn active-multi" data-view="multiplayer" style="color:var(--red); font-weight:900; background:color-mix(in srgb, var(--red) 12%, transparent);"><span class="navicon">🌐</span>Multiplayer</button>
+    </nav>
+    <div class="rail-bottom">
+      <div class="progress-mini">
+        <div class="mini-top"><span>Arquivo resolvido</span><span id="mini-percent">0%</span></div>
+        <div class="mini-count"><span id="mini-done">00</span><span style="font:12px var(--sans); color:var(--muted)">/ 06</span></div>
+        <div class="meter"><i id="mini-meter"></i></div>
+      </div>
+      <div class="rail-foot">CLASSIFIED MATERIAL<br>Somente investigadores autorizados.</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="mainhead">
+      <div class="crumb">HOPE'S PEAK <b>/</b> <span id="crumb-now">DASHBOARD</span></div>
+      <div class="head-actions">
+        <button class="iconbtn" id="sound-toggle" aria-label="Som" title="Efeitos sonoros">♫</button>
+        <button class="iconbtn" id="settings-open" aria-label="Configurações" title="Configurações">⚙️</button>
+      </div>
+    </div>
+
+    <!-- SEÇÃO MULTIPLAYER -->
+    <section class="view" id="view-multiplayer">
+      <div class="page-title">
+        <div><div class="eyebrow">Seção 04 / Investigação Coletiva</div><h1>Investigação em Grupo.</h1></div>
+        <p>Conecte-se em tempo real com outros detetives da Hope's Peak. Compartilhe o caso, analisem pistas e apresentem acusações em conjunto.</p>
+      </div>
+      <div class="progress-layout">
+        <div class="progress-card">
+          <div class="eyebrow">Criar ou Entrar em Sala</div>
+          <h3>Central de Conexão.</h3>
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:15px">
+            <div>
+              <label style="font-size:10px; font-weight:800; color:var(--muted); text-transform:uppercase">Seu Nome de Detetive:</label>
+              <input id="player-name-input" type="text" placeholder="Ex: Naegi" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--paper2); color:var(--ink); margin-top:4px">
+            </div>
+            <div style="display:flex; gap:8px">
+              <button class="btn primary" id="btn-create-room" style="flex:1">CRIAR SALA ↗</button>
+            </div>
+            <hr style="border:0; border-top:1px solid var(--line); margin:10px 0">
+            <div>
+              <label style="font-size:10px; font-weight:800; color:var(--muted); text-transform:uppercase">Código da Sala:</label>
+              <div style="display:flex; gap:8px; margin-top:4px">
+                <input id="room-code-input" type="text" placeholder="Ex: HPA-8921" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--paper2); color:var(--ink); text-transform:uppercase">
+                <button class="btn ink" id="btn-join-room">ENTRAR</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="progress-card">
+          <div class="eyebrow">Status da Conexão</div>
+          <h3 id="room-status-title">Fora de Sala</h3>
+          <div id="room-info-box" style="display:none; margin-top:15px">
+            <div style="background:var(--dark); color:white; padding:14px; border-radius:10px; margin-bottom:12px">
+              <span style="font-size:10px; letter-spacing:.15em; color:var(--acid); text-transform:uppercase">CÓDIGO DA SALA DE INVESTIGAÇÃO:</span>
+              <h2 id="current-room-code" style="margin:4px 0 0; font-family:var(--serif); font-size:32px; color:var(--acid); letter-spacing:2px">-------</h2>
+              <small style="font-size:10px; color:#aaa">Compartilhe este código com o seu parceiro detetive.</small>
+            </div>
+            <div class="subhead"><h3 style="font-size:10px">Detetives na Sala</h3></div>
+            <div id="room-players-list" style="display:grid; gap:6px"></div>
+            <button class="btn soft" id="btn-leave-room" style="width:100%; margin-top:15px">SAIR DA SALA</button>
+          </div>
+          <div id="room-idle-box" class="empty-state">
+            Você não está em nenhuma sala no momento. Crie uma nova sala ou digite o código de um parceiro para investigar juntos.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view active" id="view-home">
+      <div class="hero">
+        <div class="hero-copy">
+          <div class="hero-tag">Arquivo investigativo acesso 09</div>
+          <h1>THE LAST<br><em>TRUTH.</em></h1>
+          <p>Seis arquivos lacrados. Um elenco cheio de segredos. Leia os depoimentos, conecte as evidências e descubra o que realmente aconteceu dentro da academia.</p>
+          <div class="hero-buttons">
+            <button class="btn primary" id="continue-btn">ABRIR INVESTIGAÇÃO ↗</button>
+            <button class="btn outline" data-goto="cases">VER TODOS OS CASOS</button>
+          </div>
+        </div>
+        <div class="hero-art">
+          <span class="hero-index">HPA / INTERNAL USE ONLY</span>
+          <div class="seal">
+            <div class="seal-core">裁</div>
+            <span class="seal-orbit"></span>
+            <div class="seal-label">VERITAS . 11037</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span>Casos solucionados</span><strong id="stat-done">00<span style="font: 13px var(--sans);color:var(--muted)"> / 06</span></strong><small>O arquivo não esquece.</small></div>
+        <div class="stat"><span>Precisão do detetive</span><strong id="stat-accuracy">-</strong><small id="stat-attempts">Primeira acusação ainda aguarda.</small></div>
+        <div class="stat"><span>Próximo arquivo</span><strong id="stat-next">001</strong><small id="stat-next-name">O acorde ausente</small></div>
+      </div>
+
+      <div class="section-head">
+        <div><div class="eyebrow">Dossiês disponíveis</div><h2>Investigações em aberto.</h2></div>
+        <p>Selecione um arquivo para começar.</p>
+      </div>
+      <div class="case-grid" id="home-cases"></div>
+
+      <div class="callout">
+        <div><strong>Uma pista nunca está sozinha.</strong><p>Leia os horários, confronte as versões e não confie na primeira impressão.</p></div>
+        <button class="btn ink" data-goto="cast">CONSULTAR O ELENCO ↗</button>
+      </div>
+    </section>
+
+    <section class="view" id="view-cases">
+      <div class="page-title">
+        <div><div class="eyebrow">Seção 01 / documentos</div><h1>Case files.</h1></div>
+        <p>Os registros abaixo foram recuperados dos arquivos internos da academia. Casos são liberados em sequência: uma verdade abre a próxima porta.</p>
+      </div>
+      <div class="filter-row">
+        <button class="chip active" data-filter="all">Todos os arquivos</button>
+        <button class="chip" data-filter="open">Disponíveis</button>
+        <button class="chip" data-filter="done">Solucionados</button>
+        <button class="chip" data-filter="locked">Lacrados</button>
+      </div>
+      <div class="case-grid" id="all-cases"></div>
+    </section>
+
+    <section class="view" id="view-case">
+      <div class="page-title">
+        <div><div class="eyebrow" id="case-kicker">Arquivo / 001</div><h1 id="case-page-title">O acorde ausente.</h1></div>
+        <p id="case-lead">Analise o local, selecione uma evidência e identifique quem está escondendo a verdade.</p>
+      </div>
+      <div class="result-banner" id="result-banner">
+        <div class="bigcheck">✓</div>
+        <div class="eyebrow">Veredito confirmado</div>
+        <h2>Contradição encontrada.</h2>
+        <p id="result-text"></p>
+        <button class="btn ink" id="next-case-btn">PRÓXIMO ARQUIVO ↗</button>
+      </div>
+      <div class="case-layout" id="case-content">
+        <div class="dossier">
+          <div class="dossier-head">
+            <div><div class="eyebrow" id="case-code">DOSSIÊ 001 FÁCIL</div><h2 id="case-subtitle">A sala de música</h2></div>
+            <div class="stamp">EVIDÊNCIA</div>
+          </div>
+          <div class="dossier-body">
+            <div class="scene-strip"><div class="eyebrow">Relatório da cena</div><p id="case-scene"></p></div>
+            <p class="bodycopy" id="case-description"></p>
+            <div class="subhead"><h3>01 / Evidências coletadas</h3><span>Selecione a prova que contradiz o relato</span></div>
+            <div class="evidence-grid" id="evidence-list"></div>
+          </div>
+        </div>
+        <div class="side-stack">
+          <div class="brief-card">
+            <div class="eyebrow">Linha do tempo</div>
+            <h3>O que sabemos.</h3>
+            <div class="timeline" id="timeline-list"></div>
+            <div class="warning-note" id="case-warning"></div>
+          </div>
+          <div class="dossier">
+            <div class="dossier-head"><div><div class="eyebrow">02 / Interrogatório</div><h2 style="font-size:24px">Quem mentiu?</h2></div></div>
+            <div class="dossier-body">
+              <p class="bodycopy" style="margin-top:0">Escolha a pessoa cujo depoimento não se sustenta diante das evidências.</p>
+              <div class="suspect-list" id="suspect-list"></div>
+              <div class="accuse-panel">
+                <div class="eyebrow">Conclusão do investigador</div>
+                <h3>Apresente sua teoria.</h3>
+                <p>Você precisa selecionar uma evidência e um suspeito antes de emitir o veredito.</p>
+                <button class="btn primary" id="accuse-btn">APRESENTAR ACUSAÇÃO →</button>
+                <div class="feedback" id="case-feedback" role="status"></div>
+                <button class="hint-btn" id="hint-btn">Preciso de uma pequena dica</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:17px"><button class="btn soft" data-goto="cases">← VOLTAR AOS ARQUIVOS</button></div>
+    </section>
+
+    <section class="view" id="view-cast">
+      <div class="page-title">
+        <div><div class="eyebrow">Seção 02 / identificação</div><h1>Known faces.</h1></div>
+        <p>Perfis registrados pela Hope's Peak. Clique em uma ficha para consultar o registro de cada Ultimate da academia.</p>
+      </div>
+      <div class="filter-row">
+        <input id="cast-search" aria-label="Buscar personagem" placeholder="Buscar no arquivo..." style="background:var(--paper2); border:1px solid var(--line); border-radius:99px; padding:9px 14px; min-width:min(100%, 240px); color:var(--ink); font-size:11px">
+        <button class="chip active" data-cast-filter="all">Todos (59)</button>
+        <button class="chip" data-cast-filter="thh">DR1 (THH)</button>
+        <button class="chip" data-cast-filter="sdr2">DR2 (SDR2)</button>
+        <button class="chip" data-cast-filter="v3">DR V3</button>
+        <button class="chip" data-cast-filter="extra">Mascotes / Extras</button>
+      </div>
+      <div class="cast-grid" id="cast-grid"></div>
+      <div class="person-detail" id="person-detail">
+        <div class="detail-glyph" id="detail-glyph">K</div>
+        <div>
+          <div class="eyebrow" style="color:var(--acid)">Registro de personagem</div>
+          <h3 id="detail-name">Kaede Akamatsu</h3>
+          <div id="detail-talent" style="font-size:10px; color:var(--acid); text-transform:uppercase; letter-spacing:.12em"></div>
+          <p id="detail-bio"></p>
+          <button id="close-person">FECHAR FICHA ↗</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-progress">
+      <div class="page-title">
+        <div><div class="eyebrow">Seção 03 / histórico</div><h1>Your record.</h1></div>
+        <p>Seu histórico de investigação fica salvo neste navegador. Conclua arquivos para preencher o mural de resoluções.</p>
+      </div>
+      <div class="progress-layout">
+        <div class="progress-card">
+          <div class="eyebrow">Resumo geral</div>
+          <h3>Relatório do detetive.</h3>
+          <div class="stats" style="grid-template-columns: 1fr 1fr">
+            <div class="stat"><span>Concluídos</span><strong id="progress-done">0/6</strong></div>
+            <div class="stat"><span>Tentativas</span><strong id="progress-tries">0</strong></div>
+          </div>
+          <div style="margin-top:18px">
+            <div class="mini-top"><span>Conclusão do arquivo</span><span id="progress-percent">0%</span></div>
+            <div class="meter" style="height:8px; margin-top:9px"><i id="progress-meter"></i></div>
+          </div>
+        </div>
+        <div class="progress-card">
+          <div class="eyebrow">Arquivo de resoluções</div>
+          <h3>Casos encerrados.</h3>
+          <div class="progress-list" id="progress-list"></div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:18px">
+        <div><strong>Quer recomeçar do zero?</strong><p>Seu histórico local pode ser apagado a qualquer momento.</p></div>
+        <button class="btn ink" id="reset-progress">LIMPAR MEU PROGRESSO</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>BLACKBOX / HOPE'S PEAK CASE ARCHIVE</span>
+      <span>FAN-MADE EXPERIENCE NOT OFFICIAL</span>
+      <span>VERITAS 11037</span>
+    </footer>
+  </main>
+</div>
+
+<nav class="mobile-nav" aria-label="Navegação móvel">
+  <button class="active" data-view="home"><span>📁</span>INÍCIO</button>
+  <button data-view="cases"><span>🔍</span>CASOS</button>
+  <button data-view="cast"><span>👥</span>ELENCO</button>
+  <button data-view="progress"><span>📊</span>HISTÓRICO</button>
+  <button data-view="multiplayer" style="color:var(--red); font-weight:900"><span>🌐</span>MULTI</button>
+</nav>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'blackbox-hpa-app';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+let db = null;
+let auth = null;
+let currentUser = null;
+let roomUnsubscribe = null;
+let currentRoomId = null;
+
+if (firebaseConfig) {
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+
+  const initAuth = async () => {
+    try {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        const cred = await signInWithCustomToken(auth, __initial_auth_token);
+        currentUser = cred.user;
+      } else {
+        const cred = await signInAnonymously(auth);
+        currentUser = cred.user;
+      }
+    } catch (e) {
+      console.error("Auth error:", e);
+    }
+  };
+  initAuth();
+}
+
+window.mpState = {
+  roomId: null,
+  playerName: 'Detetive',
+  isHost: false
+};
+
+// Funções do Firebase Multiplayer
+window.createRoom = async () => {
+  if (!db || !auth.currentUser) {
+    window.toast('Conexão Firebase não pronta.');
+    return;
+  }
+  const nameInput = document.getElementById('player-name-input').value.trim() || 'Detetive';
+  const code = 'HPA-' + Math.floor(1000 + Math.random() * 9000);
+  const roomId = code.toLowerCase();
+  
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+  const playerInfo = { uid: auth.currentUser.uid, name: nameInput };
+
+  const initialData = {
+    code: code,
+    activeCase: 1,
+    selectedProof: null,
+    selectedSuspect: null,
+    players: [playerInfo],
+    doneCases: window.state.done || [],
+    lastAccuse: null,
+    updatedAt: Date.now()
+  };
+
+  try {
+    await setDoc(roomDocRef, initialData);
+    window.mpState.playerName = nameInput;
+    window.mpState.isHost = true;
+    listenToRoom(roomId);
+    window.toast('Sala criada com sucesso!');
+  } catch (err) {
+    console.error(err);
+    window.toast('Erro ao criar sala.');
+  }
+};
+
+window.joinRoom = async () => {
+  if (!db || !auth.currentUser) {
+    window.toast('Conexão Firebase não pronta.');
+    return;
+  }
+  const codeInput = document.getElementById('room-code-input').value.trim().toUpperCase();
+  if (!codeInput) {
+    window.toast('Digite o código da sala.');
+    return;
+  }
+  const roomId = codeInput.toLowerCase();
+  const nameInput = document.getElementById('player-name-input').value.trim() || 'Detetive';
+
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+  
+  window.mpState.playerName = nameInput;
+  listenToRoom(roomId, nameInput);
+};
+
+function listenToRoom(roomId, newPlayerName = null) {
+  if (roomUnsubscribe) roomUnsubscribe();
+  currentRoomId = roomId;
+
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+
+  roomUnsubscribe = onSnapshot(roomDocRef, async (snapshot) => {
+    if (!snapshot.exists()) {
+      window.toast('Sala não encontrada.');
+      leaveRoomUI();
+      return;
+    }
+    const data = snapshot.data();
+    window.mpState.roomId = roomId;
+
+    // Adiciona o jogador atual à lista de players se ainda não estiver
+    if (newPlayerName && !data.players.some(p => p.uid === auth.currentUser.uid)) {
+      const updatedPlayers = [...data.players, { uid: auth.currentUser.uid, name: newPlayerName }];
+      await updateDoc(roomDocRef, { players: updatedPlayers });
+      return;
+    }
+
+    // Atualiza a Interface do Multiplayer
+    document.getElementById('room-info-box').style.display = 'block';
+    document.getElementById('room-idle-box').style.display = 'none';
+    document.getElementById('current-room-code').textContent = data.code;
+    document.getElementById('room-status-title').textContent = 'Conectado em Tempo Real';
+
+    document.getElementById('room-players-list').innerHTML = data.players.map(p => `
+      <div style="background:var(--paper2); border:1px solid var(--line); padding:8px 12px; border-radius:6px; font-size:11px; display:flex; justify-content:space-between; align-items:center">
+        <span>🕵️ <b>${p.name}</b> ${p.uid === auth.currentUser.uid ? '(Você)' : ''}</span>
+        <span style="font-size:9px; color:#6b9a47; font-weight:900">ONLINE</span>
+      </div>
+    `).join('');
+
+    // Sincroniza estado de Investigação
+    if (data.doneCases && Array.isArray(data.doneCases)) {
+      const newDone = [...new Set([...window.state.done, ...data.doneCases])];
+      if (newDone.length !== window.state.done.length) {
+        window.state.done = newDone;
+        window.save();
+        window.renderCaseTiles();
+        window.updateProgress();
+      }
+    }
+
+    // Sincronizar escolha de provas e suspeito no caso ativo se o usuário estiver visualizando
+    if (data.activeCase === window.activeCase) {
+      if (data.selectedProof !== null && data.selectedProof !== window.state.selectedProof) {
+        window.state.selectedProof = data.selectedProof;
+        document.querySelectorAll('[data-proof]').forEach(b => b.classList.toggle('selected', Number(b.dataset.proof) === data.selectedProof));
+      }
+      if (data.selectedSuspect !== null && data.selectedSuspect !== window.state.selectedSuspect) {
+        window.state.selectedSuspect = data.selectedSuspect;
+        document.querySelectorAll('[data-suspect]').forEach(b => b.classList.toggle('selected', Number(b.dataset.suspect) === data.selectedSuspect));
+      }
+    }
+
+  }, (err) => {
+    console.error("Room sync error:", err);
+  });
+}
+
+window.leaveRoom = () => {
+  if (roomUnsubscribe) roomUnsubscribe();
+  currentRoomId = null;
+  window.mpState.roomId = null;
+  leaveRoomUI();
+  window.toast('Você saiu da sala.');
+};
+
+function leaveRoomUI() {
+  document.getElementById('room-info-box').style.display = 'none';
+  document.getElementById('room-idle-box').style.display = 'block';
+  document.getElementById('room-status-title').textContent = 'Fora de Sala';
+}
+
+// Sincronizar ações para o Firestore quando em sala
+window.syncProofToRoom = async (proofIndex) => {
+  if (!currentRoomId || !db) return;
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
+  try {
+    await updateDoc(roomDocRef, { selectedProof: proofIndex, activeCase: window.activeCase });
+  } catch (e) {}
+};
+
+window.syncSuspectToRoom = async (suspectIndex) => {
+  if (!currentRoomId || !db) return;
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
+  try {
+    await updateDoc(roomDocRef, { selectedSuspect: suspectIndex, activeCase: window.activeCase });
+  } catch (e) {}
+};
+
+window.syncDoneCaseToRoom = async (caseId) => {
+  if (!currentRoomId || !db) return;
+  const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
+  try {
+    const updatedDone = [...new Set([...window.state.done, caseId])];
+    await updateDoc(roomDocRef, { doneCases: updatedDone });
+  } catch (e) {}
+};
+
+document.getElementById('btn-create-room').onclick = window.createRoom;
+document.getElementById('btn-join-room').onclick = window.joinRoom;
+document.getElementById('btn-leave-room').onclick = window.leaveRoom;
+</script>
+
+<script>
+const CASES = [
+  {
+    id: 1, title: 'O acorde ausente', difficulty: 'Fácil', location: 'Sala de música',
+    scene: 'Às 16h20, a última página da nova composição de Kaede desapareceu da sala de música. A porta ficou trancada durante todo o intervalo.',
+    description: 'A partitura estava sobre o piano antes do intervalo. Duas pessoas dizem que só passaram pelo corredor. Uma admite ter entrado para abrir a janela, mas um detalhe físico torna essa versão impossível.',
+    warning: 'Não confunda presença no corredor com presença dentro da sala. O detalhe decisivo está no papel, não na fechadura.',
+    timeline: [['16:00', 'Kaede deixa a partitura sobre o piano.'], ['16:10', 'O sinal toca. A sala é trancada.'], ['16:20', 'A folha final desaparece.'], ['16:25', 'Uma marca recente é encontrada no banco do piano.']],
+    suspects: [
+      { name: 'Kaito Momota', role: 'Astronauta', statement: 'Fiquei no pátio olhando o céu. Nem cheguei perto do piano.' },
+      { name: 'Chiaki Nanami', role: 'Jogadora', statement: 'Passei pela porta, mas não toquei em nada.' },
+      { name: 'Kirumi Tojo', role: 'Empregada', statement: 'Entrei apenas para abrir a janela e saí imediatamente.' }
+    ],
+    evidence: [
+      ['🔍', 'Poeira interrompida', 'O banco do piano tem uma faixa limpa, como se alguém tivesse sentado ali há pouco.'],
+      ['🪟', 'Janela emperrada', 'A janela continua presa por uma trava antiga e não foi aberta hoje.'],
+      ['🧤', 'Luva no corredor', 'Uma luva foi encontrada do lado de fora, longe da sala.']
+    ],
+    culprit: 'Kirumi Tojo', proof: 1,
+    hint: 'Alguém disse que entrou para abrir a janela. Mas a janela não poderia ter sido aberta.',
+    solution: 'Kirumi afirmou que entrou para abrir a janela. A trava antiga, ainda intacta e coberta de poeira, prova que isso não aconteceu. A faixa limpa no banco indica que alguém permaneceu junto ao piano.'
+  },
+  {
+    id: 2, title: 'O relógio das 19h10', difficulty: 'Médio', location: 'Corredor leste',
+    scene: 'Um bilhete apareceu no mural às 19h10, mas a câmera do corredor registra o mural vazio às 19h12. O relógio do corredor parece estar adiantado.',
+    description: 'O bilhete contém uma informação que só poderia ter sido escrita depois de um anúncio. Os depoimentos divergem sobre a hora em que cada pessoa esteve no corredor.',
+    warning: 'Um relógio parado não confirma o horário. Compare o anúncio oficial com o registro gravado.',
+    timeline: [['18:55', 'O relógio do corredor para.'], ['19:05', 'O anúncio geral é transmitido.'], ['19:12', 'A câmera registra o mural vazio.'], ['19:18', 'O bilhete aparece no mural.']],
+    suspects: [
+      { name: 'Gundham Tanaka', role: 'Criador de animais', statement: 'Vi o bilhete antes do anúncio, por volta das 19h.' },
+      { name: 'Kyoko Kirigiri', role: 'Detetive', statement: 'A câmera confirma que o mural estava vazio às 19h12.' },
+      { name: 'Makoto Naegi', role: 'Estudante', statement: 'Só passei pelo corredor depois do anúncio.' }
+    ],
+    evidence: [
+      ['📷', 'Registro da câmera', 'O mural aparece vazio às 19h12, três minutos depois do horário escrito no bilhete.'],
+      ['📢', 'Áudio do anúncio', 'O anúncio geral começa exatamente às 19h05.'],
+      ['⏰', 'Relógio parado', 'O ponteiro dos minutos travou às 18h55.']
+    ],
+    culprit: 'Gundham Tanaka', proof: 0,
+    hint: 'O bilhete não poderia estar no mural antes de 19h12. Quem diz ter visto o papel às 19h?',
+    solution: 'Gundham diz que viu o bilhete por volta das 19h, mas a câmera mostra o mural vazio às 19h12. O relógio parado não serve como referência: o registro digital é a prova confiável.'
+  },
+  {
+    id: 3, title: 'O retrato invertido', difficulty: 'Médio', location: 'Galeria de troféus',
+    scene: 'Um retrato foi encontrado virado para a parede. Atrás dele havia uma lista com nomes riscados. Ninguém admite ter tocado na moldura.',
+    description: 'A poeira na parede mostra que o quadro foi removido e recolocado. A lista só poderia ter sido escondida por alguém que conhecia o mecanismo de fixação.',
+    warning: 'A moldura é pesada e deixa marcas bem específicas. Procure quem descreve o mecanismo com detalhes demais.',
+    timeline: [['09:00', 'A galeria é aberta.'], ['09:40', 'O retrato é visto na posição correta.'], ['10:00', 'O corredor fica vazio por cinco minutos.'], ['10:15', 'A lista é descoberta.']],
+    suspects: [
+      { name: 'Byakuya Togami', role: 'Herdeiro', statement: 'Não toquei no retrato. Nem saberia como removê-lo.' },
+      { name: 'Kaede Akamatsu', role: 'Pianista', statement: 'Vi a moldura inclinada, mas não cheguei perto.' },
+      { name: 'Chiaki Nanami', role: 'Jogadora', statement: 'O suporte tem uma trava de pressão na parte superior.' }
+    ],
+    evidence: [
+      ['🔒', 'Trava de pressão', 'O suporte só pode ser liberado pressionando uma pequena lingueta escondida atrás da moldura.'],
+      ['🧹', 'Poeira no chão', 'A poeira foi deslocada para a esquerda, indicando que o quadro foi virado no próprio suporte.'],
+      ['📜', 'Lista dobrada', 'A lista estava escondida atrás do retrato, sem marcas de manuseio recentes.']
+    ],
+    culprit: 'Chiaki Nanami', proof: 0,
+    hint: 'Quem afirma conhecer uma parte escondida do suporte, apesar de dizer que não chegou perto?',
+    solution: 'Chiaki descreve a trava de pressão escondida atrás da moldura. Esse detalhe não é visível de longe. O conhecimento específico contradiz sua versão de que não chegou perto do retrato.'
+  },
+  {
+    id: 4, title: 'A chave no aquário', difficulty: 'Difícil', location: 'Laboratório de biologia',
+    scene: 'A chave reserva do laboratório foi encontrada dentro do aquário fechado. A tampa estava encaixada e ninguém registrou a abertura do tanque.',
+    description: 'A água estava limpa e não havia sinais de respingos. A chave não poderia ter sido jogada pela abertura superior sem deixar marcas. Há uma passagem de manutenção sob o tanque.',
+    warning: 'Não pense apenas em quem alcançaria a tampa. A pergunta é quem conhecia a passagem de manutenção.',
+    timeline: [['13:10', 'A chave reserva é vista no painel.'], ['13:30', 'O laboratório é fechado.'], ['13:45', 'O aquário é inspecionado.'], ['14:00', 'A chave aparece dentro do tanque.']],
+    suspects: [
+      { name: 'Gundham Tanaka', role: 'Criador de animais', statement: 'Eu conheço os hábitos dos animais, mas não mexo na estrutura do tanque.' },
+      { name: 'Kaito Momota', role: 'Astronauta', statement: 'A tampa estava fechada quando passei. Não existe acesso por baixo.' },
+      { name: 'Kirumi Tojo', role: 'Empregada', statement: 'A passagem sob o tanque é usada para limpeza e manutenção.' }
+    ],
+    evidence: [
+      ['🛠️', 'Painel de manutenção', 'Um painel removível existe sob o tanque e permite alcançar o fundo sem abrir a tampa.'],
+      ['💧', 'Água sem respingos', 'A superfície está calma; a chave não foi lançada pela abertura superior.'],
+      ['🔑', 'Trava da tampa', 'A trava externa não apresenta marcas de violação.']
+    ],
+    culprit: 'Kaito Momota', proof: 0,
+    hint: 'Alguém negou a existência de um acesso que está documentado no painel de manutenção.',
+    solution: 'Kaito afirma que não existe acesso por baixo, mas o painel de manutenção está documentado e permite alcançar o fundo sem tocar na tampa. A água calma confirma que a chave entrou por essa passagem.'
+  },
+  {
+    id: 5, title: 'A transmissão fantasma', difficulty: 'Difícil', location: 'Estúdio de transmissão',
+    scene: 'Uma mensagem foi transmitida pelo sistema interno depois que o estúdio foi lacrado. O áudio usa uma senha que deveria estar disponível apenas no terminal de edição.',
+    description: 'A gravação possui um ruído de fundo idêntico ao arquivo de teste feito antes do lacre. Uma das pessoas diz ter ouvido a mensagem ao vivo, mas descreve um trecho que existe apenas no arquivo editado.',
+    warning: 'O detalhe mais importante não está no conteúdo da mensagem, mas no ruído que acompanha a gravação.',
+    timeline: [['20:00', 'Estúdio é lacrado.'], ['20:05', 'Sistema registra uma transmissão.'], ['20:07', 'A mensagem é reproduzida nos alto-falantes.'], ['20:10', 'Uma exportação editada é registrada no terminal.'], ['20:20', 'O áudio original é recuperado.']],
+    suspects: [
+      { name: 'Alter Ego', role: 'Inteligência artificial', statement: 'O arquivo de teste foi exportado às 19h50 e não sofreu alterações.' },
+      { name: 'Chiaki Nanami', role: 'Jogadora', statement: 'Ouvi a mensagem ao vivo. Havia duas batidas no começo.' },
+      { name: 'Kyoko Kirigiri', role: 'Detetive', statement: 'O estúdio estava lacrado e o terminal permaneceu sem operador.' }
+    ],
+    evidence: [
+      ['🎧', 'Faixa editada', 'As duas batidas mencionadas aparecem apenas na versão editada, exportada depois da transmissão.'],
+      ['💻', 'Log do terminal', 'O terminal registra uma exportação às 20h10, depois da transmissão original.'],
+      ['📻', 'Ruído de fundo', 'O ruído é idêntico ao arquivo de teste exportado antes do lacre.']
+    ],
+    culprit: 'Chiaki Nanami', proof: 0,
+    hint: 'A pessoa que ouviu "ao vivo" descreve um trecho que só foi inserido na exportação posterior.',
+    solution: 'Chiaki descreve duas batidas que não existem na transmissão original. Elas aparecem apenas na exportação das 20h10, depois da transmissão. O log do terminal prova que a versão editada foi criada após o estúdio ser fechado.'
+  },
+  {
+    id: 6, title: 'O último anúncio', difficulty: 'Expert', location: 'Auditório central',
+    scene: 'Durante o anúncio final, as luzes se apagaram por exatamente 40 segundos. Quando voltaram, a ordem dos lugares no palco havia mudado. O responsável afirma que ninguém entrou no auditório.',
+    description: 'A gravação de segurança mostra o palco vazio durante o apagão, mas o microfone principal permaneceu ligado. O sistema registrou uma alteração manual no roteiro de apresentação.',
+    warning: 'A ausência de imagem não significa ausência de ação. Um equipamento continuou ativo durante todo o apagão.',
+    timeline: [['17:30', 'Roteiro é aprovado.'], ['17:58', 'Auditório é fechado.'], ['18:00', 'Apagão de 40 segundos.'], ['18:01', 'Anúncio recomeça com a ordem alterada.']],
+    suspects: [
+      { name: 'Monomi', role: 'Assistente da academia', statement: 'Eu não tenho permissão para editar o roteiro de anúncios.' },
+      { name: 'Byakuya Togami', role: 'Herdeiro', statement: 'Não alterei o roteiro. A sequência mudou automaticamente quando a energia caiu.' },
+      { name: 'Kaede Akamatsu', role: 'Pianista', statement: 'O microfone principal ficou ativo durante todo o apagão. Eu ouvi o clique do painel.' }
+    ],
+    evidence: [
+      ['📊', 'Log do painel', 'Uma alteração manual foi registrada às 18h00, durante os 40 segundos sem luz.'],
+      ['🎙️', 'Microfone ativo', 'O microfone principal continuou ligado e captou o clique de um botão.'],
+      ['💳', 'Credencial de operador', 'O comando manual foi autorizado com a credencial temporária registrada em nome de Byakuya Togami.']
+    ],
+    culprit: 'Byakuya Togami', proof: 2,
+    hint: 'O palco estava vazio, mas alguém usou o painel. A credencial registrada na alteração aponta para quem?',
+    solution: 'Byakuya admite que a ordem foi alterada pelo painel de apresentação. O log registra uma edição manual às 18h00, enquanto a gravação não mostra ninguém no palco. A pessoa com acesso ao painel e conhecimento do sistema é quem manipula o roteiro.'
+  }
+];
+
+const CAST = [
+  // --- DR1 (THH) ---
+  { name: 'Makoto Naegi', talent: 'Ultimate Lucky Student', initial: 'MN', color: '#e0ad73', group: 'thh', bio: 'O estudante esperançoso da classe 78. Costuma encarar cada adversidade acreditando na verdade e no companheirismo.' },
+  { name: 'Kyoko Kirigiri', talent: 'Ultimate Detective', initial: 'KK', color: '#9ca9c8', group: 'thh', bio: 'Uma investigadora extremamente reservada e perspicaz. Foca estritamente em provas concretas sem se deixar levar por emoções.' },
+  { name: 'Byakuya Togami', talent: 'Ultimate Affluent Progeny', initial: 'BT', color: '#d6c16e', group: 'thh', bio: 'Herdeiro do conglomerado Togami. Frio, elitista e calculista, trata os mistérios como um jogo de intelecto.' },
+  { name: 'Toko Fukawa', talent: 'Ultimate Writing Prodigy', initial: 'TF', color: '#88748d', group: 'thh', bio: 'Romancista sombria e ansiosa. Possui uma visão cética do mundo e esconde uma segunda personalidade aterrorizante.' },
+  { name: 'Genocide Jack', talent: 'Ultimate Murderous Fiend', initial: 'GJ', color: '#c83d32', group: 'thh', bio: 'A persona assassina de Toko. Extrovertida, caótica e maníaca, usa tesouras de caça personalizadas.' },
+  { name: 'Aoi Asahina', talent: 'Ultimate Swimming Pro', initial: 'AA', color: '#e2755d', group: 'thh', bio: 'Atleta enérgica apaixonada por natação e rosquinhas. O coração emotivo do grupo em momentos difíceis.' },
+  { name: 'Yasuhiro Hagakure', talent: 'Ultimate Clairvoyant', initial: 'YH', color: '#a38459', group: 'thh', bio: 'Vidente excêntrico e descontraído. Afirma que suas previsões possuem exatamente 30% de precisão.' },
+  { name: 'Sayaka Maizono', talent: 'Ultimate Pop Sensation', initial: 'SM', color: '#689bc4', group: 'thh', bio: 'Vocalista principal de um famoso grupo idólatra. Amiga de infância de Makoto com intuição impressionante.' },
+  { name: 'Leon Kuwata', talent: 'Ultimate Baseball Star', initial: 'LK', color: '#e06547', group: 'thh', bio: 'Jogador prodígio de beisebol que sonha em mudar de carreira e se tornar um astro do rock n roll.' },
+  { name: 'Chihiro Fujisaki', talent: 'Ultimate Programmer', initial: 'CF', color: '#a2b972', group: 'thh', bio: 'Programador genial, tímido e de coração gentil. Criador do software interativo Alter Ego.' },
+  { name: 'Mondo Owada', talent: 'Ultimate Biker Gang Leader', initial: 'MO', color: '#d6833b', group: 'thh', bio: 'Líder da maior gangue de motociclistas do Japão. Apesar da postura durona, possui forte código de honra.' },
+  { name: 'Kiyotaka Ishimaru', talent: 'Ultimate Moral Compass', initial: 'KI', color: '#c93b3b', group: 'thh', bio: 'Monitor de classe rigoroso e focado em disciplina. Valoriza o trabalho duro e o cumprimento estrito das regras.' },
+  { name: 'Hifumi Yamada', talent: 'Ultimate Fanfic Creator', initial: 'HY', color: '#7a8b9e', group: 'thh', bio: 'Artista e autor apaixonado por cultura 2D e fanfictions. Focado no universo de anime e quadrinhos.' },
+  { name: 'Celestia Ludenberg', talent: 'Ultimate Gambler', initial: 'CL', color: '#882233', group: 'thh', bio: 'A Rainha das Apostas. Elegante, fria e mentirosa mestre, especialista em jogos de azar de altas apostas.' },
+  { name: 'Sakura Ogami', talent: 'Ultimate Martial Artist', initial: 'SO', color: '#8c766b', group: 'thh', bio: 'A garota mais forte do mundo. Lutadora disciplinada que valoriza a honra, lealdade e a paz interior.' },
+  { name: 'Junko Enoshima', talent: 'Ultimate Despair', initial: 'JE', color: '#d1496b', group: 'thh', bio: 'Modelo ícone da moda e a verdadeira mente por trás do desespero mundial. Mestre da manipulação.' },
+  { name: 'Mukuro Ikusaba', talent: 'Ultimate Soldier', initial: 'MI', color: '#616e78', group: 'thh', bio: 'Membro do grupo de elite Fenrir e irmã gêmea de Junko. Perita em combate militar tático.' },
+
+  // --- SDR2 ---
+  { name: 'Hajime Hinata', talent: 'Ultimate Reserve Student', initial: 'HH', color: '#739e6a', group: 'sdr2', bio: 'Protagonista pragmático e realista da Ilha Jabberwock. Busca entender a verdade sobre sua própria identidade.' },
+  { name: 'Chiaki Nanami', talent: 'Ultimate Gamer', initial: 'CN', color: '#e8a4bb', group: 'sdr2', bio: 'Gamer calma e analítica. Encara cada mistério como uma fase de jogo e guia o grupo com muita sabedoria.' },
+  { name: 'Nagito Komaeda', talent: 'Ultimate Lucky Student', initial: 'NK', color: '#a6c9a7', group: 'sdr2', bio: 'Estudante com uma filosofia distorcida sobre a Esperança absoluta. Misterioso e imprevisível.' },
+  { name: 'Fuyuhiko Kuzuryu', talent: 'Ultimate Yakuza', initial: 'FK', color: '#bfa256', group: 'sdr2', bio: 'Jovem herdeiro do clã Kuzuryu. Possui temperamento forte mas demonstra um protetorado sincero.' },
+  { name: 'Peko Pekoyama', talent: 'Ultimate Swordswoman', initial: 'PP', color: '#97a3b3', group: 'sdr2', bio: 'Mestre no manejo da espada. Servidora dedicada e protetora pessoal da família Kuzuryu.' },
+  { name: 'Akane Owari', talent: 'Ultimate Gymnast', initial: 'AO', color: '#d46b40', group: 'sdr2', bio: 'Ginasta movida por instintos apurados e apetite insaciável. Prefere resolver conflitos na ação.' },
+  { name: 'Sonia Nevermind', talent: 'Ultimate Princess', initial: 'SN', color: '#e5ca65', group: 'sdr2', bio: 'Princesa do reino europeu de Novoselic. Fascinada por occultismo, cultura pop e assuntos militares.' },
+  { name: 'Kazuichi Soda', talent: 'Ultimate Mechanic', initial: 'KS', color: '#df5488', group: 'sdr2', bio: 'Mecânico extravagante especialista em motores e engenharias. Fã incondicional da Princesa Sonia.' },
+  { name: 'Gundham Tanaka', talent: 'Ultimate Breeder', initial: 'GT', color: '#9e8acb', group: 'sdr2', bio: 'Criador de animais teatral que comanda os Quatro Deuses Negros da Destruição (hamsters).' },
+  { name: 'Nekomaru Nidai', talent: 'Ultimate Team Manager', initial: 'NN', color: '#4a6fa5', group: 'sdr2', bio: 'Treinador com voz de trovão e espírito imparável. Focado em extrair o potencial máximo de cada atleta.' },
+  { name: 'Ibuki Mioda', talent: 'Ultimate Musician', initial: 'IM', color: '#e64398', group: 'sdr2', bio: 'Guitarrista e cantora hiperativa de metal/punk. Transborda energia positiva e bordões únicos.' },
+  { name: 'Hiyoko Saionji', talent: 'Ultimate Traditional Dancer', initial: 'HS', color: '#f09c38', group: 'sdr2', bio: 'Dançarina tradicional japonesa. Aparente fofura que contrasta com sua atitude ranzinza e sarcástica.' },
+  { name: 'Mikan Tsumiki', talent: 'Ultimate Nurse', initial: 'MT', color: '#ca98c7', group: 'sdr2', bio: 'Enfermeira dedicada porém extremamente insegura e estabanada. Cuida do bem-estar de todos.' },
+  { name: 'Mahiru Koizumi', talent: 'Ultimate Photographer', initial: 'MK', color: '#c75643', group: 'sdr2', bio: 'Fotógrafa sensata e maternal. Valoriza o registro de sorrisos verdadeiros e detesta irresponsabilidade.' },
+  { name: 'Teruteru Hanamura', talent: 'Ultimate Cook', initial: 'TH', color: '#cf6953', group: 'sdr2', bio: 'Chef apaixonado pela gastronomia e com fortes tendências a piadas maliciosas e vaidade.' },
+  { name: 'Byakuya Togami (Imposter)', talent: 'Ultimate Imposter', initial: 'UI', color: '#a89d7b', group: 'sdr2', bio: 'Mestre do disfarce personificando Togami. Possui liderança nata e apetite grandioso.' },
+  { name: 'Izuru Kamukura', talent: 'Ultimate Hope', initial: 'IK', color: '#2b2d38', group: 'sdr2', bio: 'A síntese de todos os talentos humanos sintetizados em uma única pessoa. Acha o mundo totalmente entediante.' },
+
+  // --- DR V3 ---
+  { name: 'Shuichi Saihara', talent: 'Ultimate Detective', initial: 'SS', color: '#566982', group: 'v3', bio: 'Detetive tímido que ganha confiança ao encarar a verdade nos julgamentos da academia.' },
+  { name: 'Kaede Akamatsu', talent: 'Ultimate Pianist', initial: 'KA', color: '#d8ed71', group: 'v3', bio: 'Pianista otimista e determinada. Acredita no poder da união e lidera os colegas com coragem.' },
+  { name: 'K1-B0 (Keebo)', talent: 'Ultimate Robot', initial: 'KB', color: '#abb8c4', group: 'v3', bio: 'Robô com inteligência artificial avançada. Defende veementemente os direitos dos robôs contra preconceitos.' },
+  { name: 'Maki Harukawa', talent: 'Ultimate Assassin', initial: 'MH', color: '#b83b43', group: 'v3', bio: 'Reservada e mortal. Inicialmente se apresenta como cuidadora de crianças até revelar sua verdadeira habilidade.' },
+  { name: 'Himiko Yumeno', talent: 'Ultimate Magician', initial: 'HY', color: '#b0593b', group: 'v3', bio: 'Ilusionista preguiçosa que insiste que suas apresentações são magia de verdade.' },
+  { name: 'Rantaro Amami', talent: 'Ultimate Adventurer', initial: 'RA', color: '#73a388', group: 'v3', bio: 'Jovem calmo e misterioso que parece ter conhecimento prévio sobre as regras do Killing Game.' },
+  { name: 'Ryoma Hoshi', talent: 'Ultimate Tennis Pro', initial: 'RH', color: '#58708c', group: 'v3', bio: 'Ex-jogador de tênis prodígio com passado sombrio e tom de voz incrivelmente profundo.' },
+  { name: 'Kirumi Tojo', talent: 'Ultimate Maid', initial: 'KT', color: '#93b9b0', group: 'v3', bio: 'Empregada dedicada capaz de cumprir qualquer pedido com perfeição e eficiência impecável.' },
+  { name: 'Angie Yonaga', talent: 'Ultimate Artist', initial: 'AY', color: '#ebbc47', group: 'v3', bio: 'Artista vinda de uma ilha tropical que afirma ser a voz direta do Deus Atua.' },
+  { name: 'Tenko Chabashira', talent: 'Ultimate Aikido Master', initial: 'TC', color: '#579e78', group: 'v3', bio: 'Mestre na arte marcial Neo-Aikido. Expressiva, protetora de Himiko e hostil com homens.' },
+  { name: 'Korekiyo Shinguji', talent: 'Ultimate Anthropologist', initial: 'KS', color: '#687352', group: 'v3', bio: 'Antropólogo misterioso fascinado pela beleza e estranheza da natureza humana.' },
+  { name: 'Miu Iruma', talent: 'Ultimate Inventor', initial: 'MI', color: '#e06e9b', group: 'v3', bio: 'Inventora genial e extremamente boca-suja, cujas invenções revolucionam a tecnologia.' },
+  { name: 'Gonta Gokuhara', talent: 'Ultimate Entomologist', initial: 'GG', color: '#6b824f', group: 'v3', bio: 'Pesquisador de insetos gigante e gentil. Seu maior objetivo é se tornar um verdadeiro cavalheiro.' },
+  { name: 'Kokichi Oma', talent: 'Ultimate Supreme Leader', initial: 'KO', color: '#7a549e', group: 'v3', bio: 'Líder supremo auto-proclamado de uma organização secreta. Mestre supremo da mentira e manipulação.' },
+  { name: 'Kaito Momota', talent: 'Ultimate Astronaut', initial: 'KM', color: '#e36e58', group: 'v3', bio: 'O Luminar das Estrelas! Astronauta apaixonado que motiva todos a acreditarem em si mesmos.' },
+  { name: 'Tsumugi Shirogane', talent: 'Ultimate Cosplayer', initial: 'TS', color: '#5c7fa3', group: 'v3', bio: 'Cosplayer dedicada que se autointitula simples e comum, mas esconde grande paixão pela ficção.' },
+
+  // --- EXTRAS & MASCOTES ---
+  { name: 'Monokuma', talent: 'Headmaster', initial: 'MK', color: '#d9d9d9', group: 'extra', bio: 'O urso sádico e diretor da Hope Peak Academy. Comanda os julgamentos e pune os culpados.' },
+  { name: 'Monomi (Usami)', talent: 'Teacher', initial: 'MS', color: '#ea99b4', group: 'extra', bio: 'Coelhinha professora da Ilha Jabberwock que tenta proteger os alunos dos planos de Monokuma.' },
+  { name: 'Alter Ego', talent: 'Artificial Intelligence', initial: 'AE', color: '#83b6c6', group: 'extra', bio: 'Inteligência Artificial criada por Chihiro Fujisaki para ajudar os alunos nos arquivos da academia.' },
+  { name: 'Jin Kirigiri', talent: 'Headmaster', initial: 'JK', color: '#7a7d85', group: 'extra', bio: 'Antigo diretor da Hope Peak Academy e pai de Kyoko Kirigiri.' },
+  { name: 'Natsumi Kuzuryu', talent: 'Reserve Student', initial: 'NK', color: '#c7b275', group: 'extra', bio: 'Irmã caçula de Fuyuhiko, determinada a provar seu valor mesmo sem um talento oficial.' },
+  { name: 'Sato', talent: 'Reserve Student', initial: 'ST', color: '#628c85', group: 'extra', bio: 'Estudante do curso reserva e amiga próxima de Mahiru Koizumi.' },
+  { name: 'Monotaro', talent: 'Monokuber', initial: 'MT', color: '#d94141', group: 'extra', bio: 'Líder trapalhão dos Monokubers, o filho de Monokuma vestido de vermelho.' },
+  { name: 'Monodam', talent: 'Monokuber', initial: 'MD', color: '#41a65c', group: 'extra', bio: 'O robô silencioso dos Monokubers que guarda ressentimento dos irmãos.' },
+  { name: 'Monosuke', talent: 'Monokuber', initial: 'MS', color: '#e0a138', group: 'extra', bio: 'O Monokuber de óculos que fala como um contador burocrático e ganancioso.' },
+  { name: 'Monokid', talent: 'Monokuber', initial: 'MK', color: '#387ee0', group: 'extra', bio: 'O Monokuber roqueiro extravagante, barulhento e vulgar.' },
+  { name: 'Monophanie', talent: 'Monokuber', initial: 'MP', color: '#e067b7', group: 'extra', bio: 'A única garota dos Monokubers, extremamente sensível a violência e sangue.' }
+];
+
+const STORE = 'blackbox_hpa_v2';
+let state = { done: [], tries: 0, correct: 0, attemptsByCase: {}, theme: 'paper', sound: false, motion: false, current: 1, selectedProof: null, selectedSuspect: null, filter: 'all', castFilter: 'all' };
+let activeCase = 1;
+let audioCtx = null;
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE) || '{}');
+    state = { ...state, ...s };
+  } catch (e) {}
+  document.body.dataset.theme = state.theme || 'paper';
+  document.body.classList.toggle('reduce-motion', !!state.motion);
+}
+
+function save() {
+  localStorage.setItem(STORE, JSON.stringify(state));
+  updateProgress();
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => el.classList.remove('show'), 2300);
+}
+
+function ping(freq = 540, duration = .06) {
+  if (!state.sound) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(.045, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + duration);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+function goto(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const target = document.getElementById('view-' + view);
+  if (target) target.classList.add('active');
+  document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.getElementById('crumb-now').textContent = ({ home: 'DASHBOARD', cases: 'CASE FILES', case: 'INVESTIGATION', cast: 'ROSTER', progress: 'RECORD' })[view] || view.toUpperCase();
+  window.scrollTo({ top: 0, behavior: state.motion ? 'auto' : 'smooth' });
+  ping(420);
+}
+
+function caseTile(c) {
+  const done = state.done.includes(c.id), unlocked = c.id === 1 || state.done.includes(c.id - 1), cls = done ? 'done' : !unlocked ? 'locked' : '';
+  return `<article class="case-tile ${cls}" data-num="${String(c.id).padStart(2, '0')}" data-case="${c.id}" ${unlocked ? 'tabindex="0" role="button" aria-label="Abrir caso ' + c.id + '"' : ''}>
+    <div class="tile-top"><span class="file-code">FILE / ${String(c.id).padStart(3, '0')}</span><span class="difficulty">${c.difficulty}</span></div>
+    <h3>${c.title}</h3>
+    <p>${c.location}. ${unlocked ? (done ? 'Veredito registrado' : 'Arquivo disponível') : 'Conclua o arquivo anterior'}</p>
+    <div class="tile-foot"><span>${done ? '✓ RESOLVIDO' : unlocked ? 'ABRIR ARQUIVO' : '🔒 LACRADO'}</span><span class="arr">${done ? '' : unlocked ? '↗' : 'x'}</span></div>
+  </article>`;
+}
+
+function renderCaseTiles() {
+  document.getElementById('home-cases').innerHTML = CASES.map(caseTile).join('');
+  const f = state.filter;
+  document.getElementById('all-cases').innerHTML = CASES.filter(c => f === 'all' || (f === 'done' && state.done.includes(c.id)) || (f === 'open' && !state.done.includes(c.id) && (c.id === 1 || state.done.includes(c.id - 1))) || (f === 'locked' && c.id > 1 && !state.done.includes(c.id - 1))).map(caseTile).join('') || '<div class="empty-state">Nenhum arquivo nesta categoria.</div>';
+}
+
+function openCase(id) {
+  const c = CASES.find(x => x.id === id);
+  if (!c) return;
+  if (id > 1 && !state.done.includes(id - 1)) {
+    toast('Arquivo lacrado. Resolva o caso anterior primeiro.');
+    return;
+  }
+  activeCase = id;
+  state.current = id;
+  state.selectedProof = null;
+  state.selectedSuspect = null;
+  save();
+
+  document.getElementById('case-kicker').textContent = `ARQUIVO / ${String(id).padStart(3, '0')} . ${c.difficulty.toUpperCase()}`;
+  document.getElementById('case-page-title').textContent = c.title + '.';
+  document.getElementById('case-lead').textContent = `${c.location}. Analise o local, selecione uma evidência e identifique quem está escondendo a verdade.`;
+  document.getElementById('case-code').textContent = `DOSSIÊ ${String(id).padStart(3, '0')} ${c.difficulty.toUpperCase()}`;
+  document.getElementById('case-subtitle').textContent = c.location;
+  document.getElementById('case-scene').textContent = c.scene;
+  document.getElementById('case-description').textContent = c.description;
+  document.getElementById('case-warning').textContent = c.warning;
+
+  document.getElementById('timeline-list').innerHTML = c.timeline.map(t => `<div class="time-row"><b>${t[0]}</b><span>${t[1]}</span></div>`).join('');
+  document.getElementById('evidence-list').innerHTML = c.evidence.map((e, i) => `<button class="evidence" data-proof="${i}"><span class="e-icon">${e[0]}</span><strong>${e[1]}</strong><small>${e[2]}</small></button>`).join('');
+  document.getElementById('suspect-list').innerHTML = c.suspects.map((s, i) => `<button class="suspect" data-suspect="${i}"><span class="avatar">${s.name.split(' ').map(x => x[0]).slice(0, 2).join('')}</span><span><strong>${s.name}</strong><small>"${s.statement}"</small></span><i class="radio-dot"></i></button>`).join('');
+
+  document.getElementById('case-feedback').className = 'feedback';
+  document.getElementById('case-feedback').textContent = '';
+  document.getElementById('result-banner').classList.toggle('show', state.done.includes(id));
+  document.getElementById('case-content').style.display = state.done.includes(id) ? 'none' : '';
+  document.getElementById('result-text').textContent = c.solution;
+  document.getElementById('next-case-btn').textContent = id === 6 ? 'VOLTAR AO PAINEL ↗' : 'PRÓXIMO ARQUIVO ↗';
+  document.getElementById('accuse-btn').disabled = state.done.includes(id);
+  document.getElementById('hint-btn').disabled = state.done.includes(id);
+
+  goto('case');
+}
+
+function chooseProof(i) {
+  if (state.done.includes(activeCase)) return;
+  state.selectedProof = i;
+  document.querySelectorAll('[data-proof]').forEach(b => b.classList.toggle('selected', Number(b.dataset.proof) === i));
+  ping(650);
+  if (window.syncProofToRoom) window.syncProofToRoom(i);
+}
+
+function chooseSuspect(i) {
+  if (state.done.includes(activeCase)) return;
+  state.selectedSuspect = i;
+  document.querySelectorAll('[data-suspect]').forEach(b => b.classList.toggle('selected', Number(b.dataset.suspect) === i));
+  ping(480);
+  if (window.syncSuspectToRoom) window.syncSuspectToRoom(i);
+}
+
+function accuse() {
+  const c = CASES[activeCase - 1], f = document.getElementById('case-feedback');
+  if (state.selectedProof === null || state.selectedSuspect === null) {
+    f.className = 'feedback show bad';
+    f.textContent = 'Selecione uma evidência e um suspeito antes de apresentar sua acusação.';
+    ping(180);
+    return;
+  }
+  state.tries++;
+  state.attemptsByCase[activeCase] = (state.attemptsByCase[activeCase] || 0) + 1;
+  const selectedName = c.suspects[state.selectedSuspect].name;
+  const ok = selectedName === c.culprit && state.selectedProof === c.proof;
+
+  if (ok) {
+    state.correct++;
+    state.done = [...new Set([...state.done, activeCase])];
+    save();
+    if (window.syncDoneCaseToRoom) window.syncDoneCaseToRoom(activeCase);
+    document.getElementById('case-content').style.display = 'none';
+    document.getElementById('result-text').textContent = c.solution;
+    document.getElementById('result-banner').classList.add('show');
+    f.className = 'feedback show good';
+    f.textContent = 'Veredito correto.';
+    document.getElementById('next-case-btn').disabled = false;
+    confetti();
+    ping(820, .2);
+    renderCaseTiles();
+    updateProgress();
+    toast('Caso solucionado. Novo arquivo liberado.');
+  } else {
+    save();
+    const missing = selectedName !== c.culprit && state.selectedProof !== c.proof ? 'O suspeito e a evidência não combinam com a linha de investigação.' : selectedName !== c.culprit ? 'A pessoa escolhida não é a origem da contradição.' : 'A evidência selecionada não derruba esse depoimento.';
+    f.className = 'feedback show bad';
+    f.textContent = missing + ' Revise a linha do tempo e tente novamente.';
+    ping(190, .15);
+  }
+}
+
+function confetti() {
+  const root = document.getElementById('confetti');
+  root.innerHTML = '';
+  for (let i = 0; i < 38; i++) {
+    const el = document.createElement('i');
+    el.style.left = Math.random() * 100 + '%';
+    el.style.setProperty('--dx', (Math.random() * 180 - 90) + 'px');
+    el.style.animationDelay = Math.random() * .4 + 's';
+    el.style.background = ['var(--red)', 'var(--acid)', '#7f9ec4', '#e7ad9a'][i % 4];
+    root.appendChild(el);
+  }
+  setTimeout(() => root.innerHTML = '', 2400);
+}
+
+function showHint() {
+  const c = CASES[activeCase - 1];
+  const f = document.getElementById('case-feedback');
+  f.className = 'feedback show good';
+  f.textContent = 'PISTA: ' + c.hint;
+  ping(330);
+}
+
+function updateProgress() {
+  const n = state.done.length, p = Math.round(n / 6 * 100), next = CASES.find(c => !state.done.includes(c.id));
+  document.getElementById('mini-done').textContent = String(n).padStart(2, '0');
+  document.getElementById('mini-percent').textContent = p + '%';
+  document.getElementById('mini-meter').style.width = p + '%';
+
+  document.getElementById('stat-done').innerHTML = String(n).padStart(2, '0') + '<span style="font: 13px var(--sans);color:var(--muted)"> / 06</span>';
+  document.getElementById('stat-accuracy').textContent = state.tries ? Math.round(state.correct / state.tries * 100) + '%' : '-';
+  document.getElementById('stat-attempts').textContent = state.tries ? `${state.tries} acusação(ões) apresentada(s).` : 'Primeira acusação ainda aguarda.';
+  document.getElementById('stat-next').textContent = next ? String(next.id).padStart(3, '0') : '';
+  document.getElementById('stat-next-name').textContent = next ? next.title : 'Todos os casos concluídos';
+
+  document.getElementById('progress-done').textContent = n + '/6';
+  document.getElementById('progress-tries').textContent = state.tries;
+  document.getElementById('progress-percent').textContent = p + '%';
+  document.getElementById('progress-meter').style.width = p + '%';
+  document.getElementById('progress-list').innerHTML = CASES.map(c => `<div class="progress-row"><span class="progress-no">${String(c.id).padStart(2, '0')}</span><span><b>${c.title}</b><br><small>${c.difficulty} . ${c.location}</small></span><b style="color:${state.done.includes(c.id) ? '#6b9148' : 'var(--muted)'}">${state.done.includes(c.id) ? '✓ OK' : '-'}</b></div>`).join('');
+}
+
+function renderCast(q = '') {
+  const group = state.castFilter || 'all';
+  const list = CAST.filter(c => {
+    const matchesQuery = c.name.toLowerCase().includes(q.toLowerCase()) || c.talent.toLowerCase().includes(q.toLowerCase());
+    const matchesGroup = group === 'all' || c.group === group;
+    return matchesQuery && matchesGroup;
+  });
+
+  document.getElementById('cast-grid').innerHTML = list.map(c => `
+    <article class="person" data-person="${c.name}" style="--accent:${c.color}" tabindex="0" role="button">
+      <div class="person-art">
+        <div class="person-glyph">${c.initial}</div>
+        <small>HPA PERSONNEL FILE</small>
+      </div>
+      <div class="person-info">
+        <h3>${c.name}</h3>
+        <p>Registro de personagem</p>
+        <span class="talent">${c.talent}</span>
+      </div>
+    </article>
+  `).join('') || '<div class="empty-state">Nenhum registro encontrado.</div>';
+}
+
+function showPerson(name) {
+  const c = CAST.find(x => x.name === name);
+  if (!c) return;
+  const d = document.getElementById('person-detail');
+  d.style.setProperty('--accent', c.color);
+  document.getElementById('detail-glyph').textContent = c.initial;
+  document.getElementById('detail-name').textContent = c.name;
+  document.getElementById('detail-talent').textContent = c.talent;
+  document.getElementById('detail-bio').textContent = c.bio;
+  d.classList.add('show');
+  d.scrollIntoView({ behavior: state.motion ? 'auto' : 'smooth', block: 'nearest' });
+  ping(530);
+}
+
+function setTheme(t) {
+  state.theme = t;
+  document.body.dataset.theme = t;
+  document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeSet === t)));
+  save();
+}
+
+function settingsSync() {
+  const soundBtn = document.getElementById('sound-setting');
+  if (soundBtn) soundBtn.textContent = state.sound ? 'LIGADO' : 'DESLIGADO';
+
+  const motionBtn = document.getElementById('motion-setting');
+  if (motionBtn) motionBtn.textContent = state.motion ? 'LIGADO' : 'DESLIGADO';
+
+  const soundToggle = document.getElementById('sound-toggle');
+  if (soundToggle) soundToggle.style.color = state.sound ? 'var(--red)' : 'var(--ink)';
+
+  document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeSet === state.theme)));
+  document.body.classList.toggle('reduce-motion', !!state.motion);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.addEventListener('click', e => {
+  const nav = e.target.closest('[data-view]');
+  if (nav) { goto(nav.dataset.view); return; }
+
+  const go = e.target.closest('[data-goto]');
+  if (go) { goto(go.dataset.goto); return; }
+
+  const tile = e.target.closest('[data-case]');
+  if (tile) { openCase(Number(tile.dataset.case)); return; }
+
+  const pr = e.target.closest('[data-proof]');
+  if (pr) { chooseProof(Number(pr.dataset.proof)); return; }
+
+  const su = e.target.closest('[data-suspect]');
+  if (su) { chooseSuspect(Number(su.dataset.suspect)); return; }
+
+  const per = e.target.closest('[data-person]');
+  if (per) { showPerson(per.dataset.person); return; }
+
+  const close = e.target.closest('[data-close]');
+  if (close) { closeModal(close.dataset.close); return; }
+
+  const th = e.target.closest('[data-theme-set]');
+  if (th) { setTheme(th.dataset.themeSet); return; }
+
+  const fl = e.target.closest('[data-filter]');
+  if (fl) {
+    state.filter = fl.dataset.filter;
+    document.querySelectorAll('[data-filter]').forEach(x => x.classList.toggle('active', x === fl));
+    renderCaseTiles();
+    return;
+  }
+
+  const cfl = e.target.closest('[data-cast-filter]');
+  if (cfl) {
+    state.castFilter = cfl.dataset.castFilter;
+    document.querySelectorAll('[data-cast-filter]').forEach(x => x.classList.toggle('active', x === cfl));
+    renderCast(document.getElementById('cast-search').value);
+    return;
+  }
+});
+
+// Inicialização segura garantindo que os elementos já existem no DOM
+function initApp() {
+  const continueBtn = document.getElementById('continue-btn');
+  if (continueBtn) {
+    continueBtn.onclick = () => {
+      const next = CASES.find(c => !state.done.includes(c.id));
+      openCase(next ? next.id : 1);
+    };
+  }
+
+  const accuseBtn = document.getElementById('accuse-btn');
+  if (accuseBtn) accuseBtn.onclick = accuse;
+
+  const hintBtn = document.getElementById('hint-btn');
+  if (hintBtn) hintBtn.onclick = showHint;
+
+  const nextCaseBtn = document.getElementById('next-case-btn');
+  if (nextCaseBtn) {
+    nextCaseBtn.onclick = () => {
+      const id = activeCase === 6 ? null : activeCase + 1;
+      if (id) openCase(id);
+      else goto('home');
+    };
+  }
+
+  const settingsOpen = document.getElementById('settings-open');
+  if (settingsOpen) settingsOpen.onclick = () => openModal('settings-modal');
+
+  const soundToggle = document.getElementById('sound-toggle');
+  if (soundToggle) {
+    soundToggle.onclick = () => { state.sound = !state.sound; save(); settingsSync(); ping(600); };
+  }
+
+  const soundSetting = document.getElementById('sound-setting');
+  if (soundSetting) {
+    soundSetting.onclick = () => { state.sound = !state.sound; save(); settingsSync(); ping(600); };
+  }
+
+  const motionSetting = document.getElementById('motion-setting');
+  if (motionSetting) {
+    motionSetting.onclick = () => { state.motion = !state.motion; save(); settingsSync(); };
+  }
+
+  const castSearch = document.getElementById('cast-search');
+  if (castSearch) castSearch.oninput = e => renderCast(e.target.value);
+
+  const closePerson = document.getElementById('close-person');
+  if (closePerson) {
+    closePerson.onclick = () => document.getElementById('person-detail').classList.remove('show');
+  }
+
+  const resetProgress = document.getElementById('reset-progress');
+  if (resetProgress) resetProgress.onclick = () => openModal('confirm-modal');
+
+  const confirmReset = document.getElementById('confirm-reset');
+  if (confirmReset) {
+    confirmReset.onclick = () => {
+      const theme = state.theme;
+      state = { done: [], tries: 0, correct: 0, attemptsByCase: {}, theme, sound: false, motion: false, current: 1, selectedProof: null, selectedSuspect: null, filter: 'all', castFilter: 'all' };
+      save();
+      renderCaseTiles();
+      settingsSync();
+      closeModal('confirm-modal');
+      goto('home');
+      toast('Arquivo local reiniciado.');
+    };
+  }
+
+  document.querySelectorAll('.modal-wrap').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
+
+  load();
+  renderCaseTiles();
+  renderCast();
+  updateProgress();
+  settingsSync();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+</script>
+</body>
+</html>
