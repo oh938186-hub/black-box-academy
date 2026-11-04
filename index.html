@@ -689,56 +689,138 @@ body[data-theme="night"] {
 <div class="toast" id="toast" role="status"></div>
 <div class="confetti" id="confetti"></div>
 
+<!-- BIBLIOTECA MQTT PARA MULTIPLAYER REAL ONLINE -->
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
 <script>
-// Sistema Multiplayer Nativo (BroadcastChannel / LocalStorage)
-// Livre de erros de bloqueio de WebSocket/SecurityError
+// Sistema Multiplayer Online Global (MQTT com Fallback Local via BroadcastChannel)
 window.mpState = {
   roomId: null,
   playerName: 'Detetive',
   isHost: false,
+  client: null,
   channel: null,
   players: []
 };
 
-function initBroadcastChannel(code) {
-  if (window.mpState.channel) {
-    window.mpState.channel.close();
-  }
-  window.mpState.channel = new BroadcastChannel('hpa_room_' + code);
-  
-  window.mpState.channel.onmessage = (event) => {
-    const data = event.data;
-    if (!data) return;
+const MQTT_BROKER = 'wss://broker.emqx.io:8084/mqtt';
 
-    if (data.type === 'PING_JOIN') {
-      if (window.mpState.isHost) {
-        // Adiciona o novo participante e transmite a lista atualizada
-        const exists = window.mpState.players.some(p => p.name === data.playerName);
-        if (!exists) {
-          window.mpState.players.push({ name: data.playerName, isHost: false });
-        }
-        broadcastState();
-        if (window.toast) window.toast(data.playerName + ' entrou na sala!');
-      }
-    } else if (data.type === 'ROOM_STATE') {
-      window.mpState.players = data.players;
-      updatePlayersListUI(data.players);
-    } else if (data.type === 'SYNC_ACTION') {
-      handleIncomingSync(data);
-    } else if (data.type === 'LEAVE') {
-      window.mpState.players = window.mpState.players.filter(p => p.name !== data.playerName);
-      if (window.mpState.isHost) broadcastState();
-      else updatePlayersListUI(window.mpState.players);
+function initMQTTConnection(code, callback) {
+  // Limpa conexões ou canais anteriores
+  if (window.mpState.client) {
+    try { window.mpState.client.end(); } catch(e){}
+    window.mpState.client = null;
+  }
+  if (window.mpState.channel) {
+    try { window.mpState.channel.close(); } catch(e){}
+    window.mpState.channel = null;
+  }
+
+  if (window.toast) window.toast('Iniciando sala de investigação...');
+
+  const clientId = 'hpa_' + Math.random().toString(16).substring(2, 10);
+  let mqttConnected = false;
+
+  // Função auxiliar para inicializar canal local (BroadcastChannel) como fallback seguro
+  const initLocalFallback = () => {
+    try {
+      const channelName = 'hpa_room_' + code;
+      const channel = new BroadcastChannel(channelName);
+      window.mpState.channel = channel;
+
+      channel.onmessage = (event) => {
+        try {
+          const data = event.data;
+          if (!data || data.sender === clientId) return;
+          handleIncomingMessage(data, clientId);
+        } catch(e) {}
+      };
+
+      if (callback) callback();
+    } catch(e) {
+      if (callback) callback();
     }
   };
+
+  // Tenta conexão MQTT via WebSocket com proteção contra SecurityError
+  try {
+    if (typeof mqtt !== 'undefined') {
+      const client = mqtt.connect(MQTT_BROKER, { clientId: clientId, keepalive: 60, connectTimeout: 4000 });
+      window.mpState.client = client;
+      const topic = 'hpa_case_archive/' + code;
+
+      client.on('connect', () => {
+        mqttConnected = true;
+        client.subscribe(topic, (err) => {
+          if (!err && callback) callback();
+        });
+      });
+
+      client.on('message', (t, message) => {
+        try {
+          const data = JSON.parse(message.toString());
+          if (!data || data.sender === clientId) return;
+          handleIncomingMessage(data, clientId);
+        } catch(e) {}
+      });
+
+      client.on('error', () => {
+        if (!mqttConnected) {
+          initLocalFallback();
+        }
+      });
+    } else {
+      initLocalFallback();
+    }
+  } catch (err) {
+    // Se ocorrer bloqueio de segurança (SecurityError no Canvas/iFrame), usa o fallback local sem falhar
+    initLocalFallback();
+  }
+}
+
+function handleIncomingMessage(data, clientId) {
+  if (data.type === 'PING_JOIN') {
+    if (window.mpState.isHost) {
+      const exists = window.mpState.players.some(p => p.id === data.sender);
+      if (!exists) {
+        window.mpState.players.push({ id: data.sender, name: data.playerName, isHost: false });
+      }
+      broadcastState();
+      if (window.toast) window.toast(data.playerName + ' entrou na sala!');
+    }
+  } else if (data.type === 'ROOM_STATE') {
+    window.mpState.players = data.players;
+    updatePlayersListUI(data.players);
+  } else if (data.type === 'SYNC_ACTION') {
+    handleIncomingSync(data);
+  } else if (data.type === 'LEAVE') {
+    window.mpState.players = window.mpState.players.filter(p => p.id !== data.sender);
+    if (window.mpState.isHost) broadcastState();
+    else updatePlayersListUI(window.mpState.players);
+  }
+}
+
+function sendNetworkMessage(payload) {
+  if (window.mpState.client) {
+    try {
+      const topic = 'hpa_case_archive/' + window.mpState.roomId;
+      window.mpState.client.publish(topic, JSON.stringify(payload));
+    } catch(e){}
+  }
+  if (window.mpState.channel) {
+    try {
+      window.mpState.channel.postMessage(payload);
+    } catch(e){}
+  }
 }
 
 function broadcastState() {
   updatePlayersListUI(window.mpState.players);
-  if (window.mpState.channel) {
-    window.mpState.channel.postMessage({
+  if (window.mpState.roomId) {
+    sendNetworkMessage({
       type: 'ROOM_STATE',
-      players: window.mpState.players
+      players: window.mpState.players,
+      sender: window.mpState.client ? window.mpState.client.options.clientId : 'host_local'
     });
   }
 }
@@ -750,18 +832,21 @@ window.createRoom = () => {
   window.mpState.playerName = nameInput;
   window.mpState.isHost = true;
   window.mpState.roomId = code;
-  window.mpState.players = [{ name: nameInput + ' (Você - Host)', isHost: true }];
 
-  initBroadcastChannel(code);
-  setupHostRoomUI(code, nameInput);
-  if (window.toast) window.toast('Sala ' + code + ' criada! Compartilhe o código.');
+  initMQTTConnection(code, () => {
+    const myId = window.mpState.client ? window.mpState.client.options.clientId : 'host_' + Math.random();
+    window.mpState.players = [{ id: myId, name: nameInput + ' (Você - Host)', isHost: true }];
+    broadcastState();
+    setupHostRoomUI(code, nameInput);
+    if (window.toast) window.toast('Sala ' + code + ' pronta!');
+  });
 };
 
 function setupHostRoomUI(code, hostName) {
   document.getElementById('room-info-box').style.display = 'block';
   document.getElementById('room-idle-box').style.display = 'none';
   document.getElementById('current-room-code').textContent = code;
-  document.getElementById('room-status-title').textContent = 'SALA ATIVA (HOST)';
+  document.getElementById('room-status-title').textContent = 'SALA DE INVESTIGAÇÃO ATIVA';
   updatePlayersListUI(window.mpState.players);
 }
 
@@ -777,19 +862,20 @@ window.joinRoom = () => {
   window.mpState.isHost = false;
   window.mpState.roomId = codeInput;
 
-  initBroadcastChannel(codeInput);
+  initMQTTConnection(codeInput, () => {
+    const myId = window.mpState.client ? window.mpState.client.options.clientId : 'guest_' + Math.random();
+    sendNetworkMessage({
+      type: 'PING_JOIN',
+      playerName: nameInput,
+      sender: myId
+    });
 
-  // Notifica o Host que um novo detetive entrou
-  window.mpState.channel.postMessage({
-    type: 'PING_JOIN',
-    playerName: nameInput
+    document.getElementById('room-info-box').style.display = 'block';
+    document.getElementById('room-idle-box').style.display = 'none';
+    document.getElementById('current-room-code').textContent = codeInput;
+    document.getElementById('room-status-title').textContent = 'CONECTADO À SALA';
+    if (window.toast) window.toast('Entrou na sala ' + codeInput + '!');
   });
-
-  document.getElementById('room-info-box').style.display = 'block';
-  document.getElementById('room-idle-box').style.display = 'none';
-  document.getElementById('current-room-code').textContent = codeInput;
-  document.getElementById('room-status-title').textContent = 'CONECTADO À SALA';
-  if (window.toast) window.toast('Conectado à sala ' + codeInput + '!');
 };
 
 function updatePlayersListUI(players) {
@@ -798,7 +884,7 @@ function updatePlayersListUI(players) {
   listEl.innerHTML = players.map(p => `
     <div style="background:var(--paper2); border:1px solid var(--line); padding:8px 12px; border-radius:6px; font-size:11px; display:flex; justify-content:space-between; align-items:center">
       <span>🕵️ <b>${p.name}</b></span>
-      <span style="font-size:9px; color:#6b9a47; font-weight:900">ONLINE</span>
+      <span style="font-size:9px; color:#6b9a47; font-weight:900">CONECTADO</span>
     </div>
   `).join('');
 }
@@ -812,23 +898,39 @@ function handleIncomingSync(data) {
 }
 
 window.syncProofToRoom = (proofIndex) => {
-  if (window.mpState.channel) {
-    window.mpState.channel.postMessage({ type: 'SYNC_ACTION', action: 'proof', value: proofIndex });
+  if (window.mpState.roomId) {
+    sendNetworkMessage({
+      type: 'SYNC_ACTION',
+      action: 'proof',
+      value: proofIndex,
+      sender: window.mpState.client ? window.mpState.client.options.clientId : 'me'
+    });
   }
 };
 
 window.syncSuspectToRoom = (suspectIndex) => {
-  if (window.mpState.channel) {
-    window.mpState.channel.postMessage({ type: 'SYNC_ACTION', action: 'suspect', value: suspectIndex });
+  if (window.mpState.roomId) {
+    sendNetworkMessage({
+      type: 'SYNC_ACTION',
+      action: 'suspect',
+      value: suspectIndex,
+      sender: window.mpState.client ? window.mpState.client.options.clientId : 'me'
+    });
   }
 };
 
 window.leaveRoom = () => {
-  if (window.mpState.channel) {
-    window.mpState.channel.postMessage({ type: 'LEAVE', playerName: window.mpState.playerName });
-    window.mpState.channel.close();
+  if (window.mpState.roomId) {
+    sendNetworkMessage({
+      type: 'LEAVE',
+      sender: window.mpState.client ? window.mpState.client.options.clientId : 'me'
+    });
+    try { if (window.mpState.client) window.mpState.client.end(); } catch(e){}
+    try { if (window.mpState.channel) window.mpState.channel.close(); } catch(e){}
   }
+  window.mpState.client = null;
   window.mpState.channel = null;
+  window.mpState.roomId = null;
   window.mpState.players = [];
   document.getElementById('room-info-box').style.display = 'none';
   document.getElementById('room-idle-box').style.display = 'block';
